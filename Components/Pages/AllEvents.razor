@@ -1,0 +1,40 @@
+﻿@page "/AllEvents"
+
+<h3>All Events</h3>
+
+@if (allEvents is null)
+{
+    <h6>Loading ... </h6>
+}
+else
+{
+    <div class="eventHeader">
+        @foreach (var anEvent in allEvents) {            
+            <h4>
+                <font color="white">
+                    #@anEvent.EventNumber @anEvent.EventDetails
+                </font>
+            </h4>
+            @foreach (var heat in anEvent.Heats)
+            {
+                <h5>
+                    <font color="white">
+                        Heat @heat.HeatNumber - Start time: @heat.StartTime
+                    </font>
+                </h5>
+                <div class="grid">
+                    <QuickGrid Items="@heat.LaneInfos">
+                        <PropertyColumn Property="@(a => a.LaneNumber)" Title="Lane" />
+                        <PropertyColumn Property="@(a => a.SwimmerName)" Title="Name" />
+                        <PropertyColumn Property="@(a => a.SwimmerAge)" Title="Age" />
+                        <PropertyColumn Property="@(a => a.SeedTime)" Title="Seed Time" />
+                    </QuickGrid>
+                </div>
+            }
+        }
+</div>    
+}
+
+@code {
+
+}
