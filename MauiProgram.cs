@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using HeatSheetHelper.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace HeatSheetHelperBlazor;
 
@@ -14,10 +15,11 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 			});
 
-		builder.Services.AddMauiBlazorWebView();
+        builder.Services.AddMauiBlazorWebView();
+        builder.Services.AddSingleton<DbHelper>();
 
 #if DEBUG
-		builder.Services.AddBlazorWebViewDeveloperTools();
+        builder.Services.AddBlazorWebViewDeveloperTools();
 		builder.Logging.AddDebug();
 #endif
 
