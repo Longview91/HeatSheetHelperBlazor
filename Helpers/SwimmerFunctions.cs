@@ -15,42 +15,50 @@ namespace HeatSheetHelper.Helpers
         /// </summary>
         internal static List<Swimmer> PutHeatSheetInClasses(List<string> heatSheet)
         {
-            List<Swimmer> swimmersToReturn = new();
-
-            bool isAlternate = false;
-            Tuple<string, string, string, bool> relayInfo = null;
-            Swimmer swimmer = new Swimmer();
-
-            foreach (var dirtyLine in heatSheet)
+            try
             {
-                string line = CleanseTheData(dirtyLine);
-                if (line.StartsWith("ALTERNATE"))
-                {
-                    isAlternate = true;
-                }
-                if (line.StartsWith('#') || line.StartsWith("EVENT") || Regex.Match(line, @"\bHEAT\s+(\d+)\s?[A-Z]?\s").Success || Regex.Match(line, @"HEAT +\d+ +\(").Success || Regex.Match(line, @"([A-Z]+ )((\d+:)?\d{2}\.\d{2}|X?NT)([A-Z]+-[A-Z]+)\d").Success)
-                {
-                    //reset the relay info if we find a new event, heat or team line
-                    relayInfo = null;
-                }
+                List<Swimmer> swimmersToReturn = new();
 
-                if (relayInfo == null)
+                bool isAlternate = false;
+                Tuple<string, string, string, bool> relayInfo = null;
+                Swimmer swimmer = new Swimmer();
+
+                foreach (var dirtyLine in heatSheet)
                 {
-                    FindPatternThatMatches(ref relayInfo, ref isAlternate, line, swimmer, swimmersToReturn);
-                }
-                else if (Regex.Match(line, RegexExpressions.relaySwimmerPattern).Success) //Relay event
-                {
-                    try
+                    string line = CleanseTheData(dirtyLine);
+                    if (line.StartsWith("ALTERNATE"))
                     {
-                        relayInfo = SwimmerFunctions.ParseRelaySwimmers(line, relayInfo, RegexExpressions.relaySwimmerPattern);
+                        isAlternate = true;
                     }
-                    catch (Exception)
+                    if (line.StartsWith('#') || line.StartsWith("EVENT") || Regex.Match(line, @"\bHEAT\s+(\d+)\s?[A-Z]?\s").Success || Regex.Match(line, @"HEAT +\d+ +\(").Success || Regex.Match(line, @"([A-Z]+ )((\d+:)?\d{2}\.\d{2}|X?NT)([A-Z]+-[A-Z]+)\d").Success)
                     {
+                        //reset the relay info if we find a new event, heat or team line
                         relayInfo = null;
                     }
+
+                    if (relayInfo == null)
+                    {
+                        swimmer = FindPatternThatMatches(ref relayInfo, ref isAlternate, line, swimmer, swimmersToReturn);
+                    }
+                    else if (Regex.Match(line, RegexExpressions.relaySwimmerPattern).Success) //Relay event
+                    {
+                        try
+                        {
+                            relayInfo = SwimmerFunctions.ParseRelaySwimmers(line, relayInfo, RegexExpressions.relaySwimmerPattern);
+                        }
+                        catch (Exception)
+                        {
+                            relayInfo = null;
+                        }
+                    }
                 }
+                return swimmersToReturn;
             }
-            return swimmersToReturn;
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString(), ConsoleColor.Red);
+                return null;
+            }
         }
 
         private static Swimmer? FindPatternThatMatches(ref Tuple<string, string, string, bool> relayInfo, ref bool isAlternate, string line, Swimmer swimmer, List<Swimmer> swimmersToReturn)
@@ -62,7 +70,7 @@ namespace HeatSheetHelper.Helpers
                 isAlternate = false;
                 swimmer = SwimmerFunctions.ParseEventLine(line);
             }
-            else if (Regex.Match(line, @"\bHEAT\s+(\d+)\s?[A-Z]?\s").Success) //This is a heat line
+            else if (Regex.Match(line, @"\bHEAT\s+(\d+)\s?OF\s").Success) //This is a heat line
             {
                 isAlternate = false;
                 swimmer = SwimmerFunctions.ParseHeatLine(line, swimmer);
@@ -75,7 +83,25 @@ namespace HeatSheetHelper.Helpers
             else if (Regex.Match(line, RegexExpressions.singleSwimmerPatternSecondary).Success)
             {
                 swimmer = SwimmerFunctions.ParseIndividualEvent(line, RegexExpressions.singleSwimmerPatternSecondary, isAlternate, swimmer);
-                swimmersToReturn.Add(swimmer);
+                swimmersToReturn.Add(new Swimmer
+                {
+                    EventNumber = swimmer.EventNumber,
+                    Distance = swimmer.Distance,
+                    CourseType = swimmer.CourseType,
+                    UnitType = swimmer.UnitType,
+                    StrokeType = swimmer.StrokeType,
+                    IsRelay = swimmer.IsRelay,
+                    EventName = swimmer.EventName,
+                    HeatNumber = swimmer.HeatNumber,
+                    StartTime = swimmer.StartTime,
+                    SwimmerId = swimmer.SwimmerId,
+                    HeatId = swimmer.HeatId,
+                    LaneNumber = swimmer.LaneNumber,
+                    Name = swimmer.Name,
+                    Age = swimmer.Age,
+                    TeamName = swimmer.TeamName,
+                    PBTime = swimmer.PBTime
+                });
                 swimmer.Name = string.Empty;
                 swimmer.Age = string.Empty;
                 swimmer.TeamName = string.Empty;
@@ -85,7 +111,25 @@ namespace HeatSheetHelper.Helpers
             else if (Regex.Match(line, RegexExpressions.singleSwimmerPatternMain).Success)
             {
                 swimmer = SwimmerFunctions.ParseIndividualEvent(line, RegexExpressions.singleSwimmerPatternMain, isAlternate, swimmer);
-                swimmersToReturn.Add(swimmer);
+                swimmersToReturn.Add(new Swimmer
+                {
+                    EventNumber = swimmer.EventNumber,
+                    Distance = swimmer.Distance,
+                    CourseType = swimmer.CourseType,
+                    UnitType = swimmer.UnitType,
+                    StrokeType = swimmer.StrokeType,
+                    IsRelay = swimmer.IsRelay,
+                    EventName = swimmer.EventName,
+                    HeatNumber = swimmer.HeatNumber,
+                    StartTime = swimmer.StartTime,
+                    SwimmerId = swimmer.SwimmerId,
+                    HeatId = swimmer.HeatId,
+                    LaneNumber = swimmer.LaneNumber,
+                    Name = swimmer.Name,
+                    Age = swimmer.Age,
+                    TeamName = swimmer.TeamName,
+                    PBTime = swimmer.PBTime
+                });
                 swimmer.Name = string.Empty;
                 swimmer.Age = string.Empty;
                 swimmer.TeamName = string.Empty;
@@ -128,14 +172,19 @@ namespace HeatSheetHelper.Helpers
         }
         internal static Swimmer ParseHeatLine(string line, Swimmer swimmer)
         {
-            swimmer.HeatNumber = int.Parse(Regex.Match(line, @"(?<=HEAT +)\d{1,}").Value.Trim());
+            swimmer.HeatNumber = int.Parse(Regex.Match(line, @"(?<=HEAT\s+)\d{1,}").Value.Trim());
             swimmer.StartTime = Regex.Match(line, @"([1-9]|10|11|12):\d{2}\s*(AM|PM)").Value.Trim();
 
             return swimmer;
         }
         internal static Swimmer ParseHeatLineOnNewPage(string line, Swimmer swimmer)
         {
-            swimmer.HeatNumber = int.Parse(Regex.Match(line, @"(?<=HEAT +)\d{1,}").Value.Trim());
+            
+            bool success = int.TryParse(Regex.Match(line, @"(?<=HEAT\s+)\d{1,}").Value.Trim(), out int heatNum);
+            if (success)
+            {
+                swimmer.HeatNumber = heatNum;
+            }
             swimmer.StartTime = String.Empty;
 
             return swimmer;
@@ -221,12 +270,12 @@ namespace HeatSheetHelper.Helpers
                 commandText = "INSERT INTO Swimmer (heatId, name, age, laneNumber, teamName, seedTime) ";
                 commandText += "VALUES (@heatId, @name1, @age1, @laneNumber, @teamName, @seedTime)";
 
-                App.InMemoryConnection.Query(commandText, param: parameters, commandType: CommandType.Text);
+                //App.InMemoryConnection.Query(commandText, param: parameters, commandType: CommandType.Text);
 
                 commandText = "INSERT INTO Swimmer (heatId, name, age, laneNumber, teamName, seedTime) ";
                 commandText += "VALUES (@heatId, @name2, @age2, @laneNumber, @teamName, @seedTime)";
 
-                App.InMemoryConnection.Query(commandText, param: parameters, commandType: CommandType.Text);
+                //App.InMemoryConnection.Query(commandText, param: parameters, commandType: CommandType.Text);
             }
             catch (Exception ex)
             {
@@ -293,7 +342,7 @@ namespace HeatSheetHelper.Helpers
         }
         private static string CleanseTheData(string line)
         {
-            return Regex.Replace(line, @"Β", "F"); //@"[^\d\s\w,:\-.'\/\!\@\#\$\%\^\&\*\(\)]", "?");
+            return Regex.Replace(line, @"Β", "F").ToUpper(); //@"[^\d\s\w,:\-.'\/\!\@\#\$\%\^\&\*\(\)]", "?");
         }
         internal static void FillEmptyTimes()
         {

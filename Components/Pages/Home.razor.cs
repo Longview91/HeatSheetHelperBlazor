@@ -15,7 +15,7 @@ namespace HeatSheetHelperBlazor.Components.Pages
 {
     public partial class Home
     {
-        private ErrorModal ErrorModal;
+        private ErrorModal ErrorModal = new();
         private List<string> swimmerNameList = new();
         private List<Swimmer> swimmerHeats = new();
         private List<Swimmer> allSwimmers = new();
@@ -74,65 +74,7 @@ namespace HeatSheetHelperBlazor.Components.Pages
             });
 
             StateHasChanged();
-
-            //try
-            //{
-            //    string commandText = "SELECT DISTINCT name FROM Swimmer ORDER BY name ASC";
-            //    CommandDefinition command = new(commandText);
-            //    swimmerNameList = App.InMemoryConnection.Query<string>(commandText).ToList();
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine(ex.ToString(), ConsoleColor.Blue);
-            //}
-
-            //swimmerNameList.Sort();
         }
-        //private void SwimmerEditor_TextChanged(object sender, TextChangedEventArgs e)
-        //{
-        //    try
-        //    {
-        //        List<string> newSwimmerList = [];
-        //        if (selectedSwimmers.Count > 0)
-        //        {
-        //            newSwimmerList = [.. selectedSwimmers];
-        //        }
-
-        //        if (swimmerEditor.Text.Trim() == "")
-        //        {
-        //            swimmerPicker.ItemsSource = swimmerNameList;
-        //            swimmerPicker.Title = swimmerPicker.Items[0];
-        //            return;
-        //        }
-
-        //        foreach (string thisSwimmerName in swimmerNameList)
-        //        {
-        //            if (thisSwimmerName.Contains(swimmerEditor.Text.ToUpper()) && newSwimmerList.Contains(thisSwimmerName) == false)
-        //            {
-        //                newSwimmerList.Add(thisSwimmerName);
-        //            }
-        //        }
-        //        swimmerPicker.ItemsSource = newSwimmerList;
-        //        int index;
-        //        if (selectedSwimmers.Count > 0 && selectedSwimmers.Count < swimmerPicker.Items.Count)
-        //        {
-        //            index = selectedSwimmers.Count;
-        //        }
-        //        else if (selectedSwimmers.Count > 0 && selectedSwimmers.Count >= swimmerPicker.Items.Count)
-        //        {
-        //            index = swimmerPicker.Items.Count - 1;
-        //        }
-        //        else
-        //        {
-        //            index = 0;
-        //        }
-        //        swimmerPicker.Title = swimmerPicker.Items[index].ToString();
-        //    }
-        //    catch
-        //    {
-        //        //Do nothing    
-        //    }
-        //}
 
         private async Task SwimmerPicker_SelectedIndexChanged(ChangeEventArgs e)
         {
