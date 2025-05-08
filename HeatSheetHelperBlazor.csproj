@@ -58,6 +58,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Compile Remove="Models\Event.cs" />
+      <Compile Remove="Models\EventGrid.cs" />
+      <Compile Remove="Models\HeatInfo.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
         <PackageReference Include="Dapper" Version="2.1.66" />
         <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="8.0.14" />

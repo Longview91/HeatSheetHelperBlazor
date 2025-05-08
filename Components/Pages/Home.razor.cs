@@ -15,10 +15,10 @@ namespace HeatSheetHelperBlazor.Components.Pages
 {
     public partial class Home
     {
-        private List<EventGrid> EventGrids = new();
         private ErrorModal ErrorModal;
         private List<string> swimmerNameList = new();
-        private List<HeatInfo> swimmerHeats = new();
+        private List<Swimmer> swimmerHeats = new();
+        private List<Swimmer> allSwimmers = new();
 
         public string? SelectedSwimmer { get; private set; }
 
@@ -26,7 +26,7 @@ namespace HeatSheetHelperBlazor.Components.Pages
         {
             try
             {
-                DbHelper.TruncateTables(App.InMemoryConnection);
+                allSwimmers.Clear();
 
                 var fileResult = await FilePicker.PickAsync(new PickOptions
                 {
@@ -39,27 +39,22 @@ namespace HeatSheetHelperBlazor.Components.Pages
 
                 PdfDocument document = PdfDocument.Open(fileResult.FullPath);
 
-                List<string> heatSheet = [];
+                List<string> heatSheet = new();
 
                 foreach (var page in document.GetPages())
                 {
                     string pdfText = ContentOrderTextExtractor.GetText(page, true);
-                    //string[] splitLines = Regex.Split(pdfText, "\n");
                     heatSheet.AddRange(Regex.Split(pdfText, "\n").ToList());
                 }
 
                 Tuple<string, string, string, bool> relayInfo = null;
                 bool isAlternate = false;
 
-                foreach (string line in heatSheet)
-                {
-                    SwimmerFunctions.PutHeatSheetInClasses(line.ToUpper(), ref relayInfo, ref isAlternate);
-                }
+                allSwimmers = SwimmerFunctions.PutHeatSheetInClasses(heatSheet);
 
-                //SwimmerFunctions.PutHeatSheetInClasses(heatSheet);
                 SwimmerFunctions.FillEmptyTimes();
 
-                CreateInitialList();
+                await CreateInitialList();
 
             }
             catch (Exception ex)
@@ -71,10 +66,14 @@ namespace HeatSheetHelperBlazor.Components.Pages
         {
             swimmerNameList = await Task.Run(() =>
             {
-                using var connection = App.InMemoryConnection;
-                string query = "SELECT DISTINCT name FROM Swimmer ORDER BY name ASC";
-                return connection.Query<string>(query).ToList();
+                return allSwimmers
+                .Select(s => s.Name)
+                .Distinct()
+                .OrderBy(name => name)
+                .ToList();
             });
+
+            StateHasChanged();
 
             //try
             //{
@@ -152,16 +151,16 @@ namespace HeatSheetHelperBlazor.Components.Pages
             {
                 swimmerHeats = await Task.Run(() =>
                 {
-                    using var connection = App.InMemoryConnection;
-                    var parameters = new { Name = swimmerName };
-                    string query = @"
-                    SELECT h.heatNumber, e.eventNumber, e.eventName, h.startTime, s.laneNumber
-                    FROM Swimmer s
-                    JOIN Heat h ON s.heatId = h.heatId
-                    JOIN Event e ON h.eventId = e.eventId
-                    WHERE s.name = @Name";
-
-                    return connection.Query<HeatInfo>(query, parameters).ToList();
+                    return (from swimmer in allSwimmers
+                            where swimmer.Name == swimmerName
+                            select new Swimmer
+                            {
+                                EventNumber = swimmer.EventNumber,
+                                HeatNumber = swimmer.HeatNumber,
+                                EventName = swimmer.EventName,
+                                StartTime = swimmer.StartTime,
+                                LaneNumber = swimmer.LaneNumber
+                            }).ToList();
                 });
 
                 // Update the UI (e.g., bind swimmerHeats to a grid or list)

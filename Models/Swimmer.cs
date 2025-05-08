@@ -8,7 +8,7 @@
         private string _unitType = ""; public string UnitType { get { return _unitType; } set { _unitType = value; } }
         private string _strokeType = ""; public string StrokeType { get { return _strokeType; } set { _strokeType = value; } }
         private bool _isRelay = false; public bool IsRelay { get { return _isRelay; } set { _isRelay = value; } }
-        private int _eventName = 0; public int EventName { get { return _eventName; } set { _eventName = value; } }
+        private string _eventName = ""; public string EventName { get { return _eventName; } set { _eventName = value; } }
         private int _heatNumber = 0; public int HeatNumber { get { return _heatNumber; } set { _heatNumber = value; } }
         private string _startTime = ""; public string StartTime { get { return _startTime; } set { _startTime = value; } }
         private int _swimmerId = 0; public int SwimmerId { get { return _swimmerId; } set { _swimmerId = value; } }

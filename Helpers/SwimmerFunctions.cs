@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using HeatSheetHelper.Constants;
+using HeatSheetHelper.Model;
 using HeatSheetHelperBlazor;
 using System.Data;
 using System.Text.RegularExpressions;
@@ -8,68 +9,88 @@ namespace HeatSheetHelper.Helpers
 {
     internal class SwimmerFunctions
     {
+
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="dirtyLine"></param>
-        /// <param name="relayInfo"></param>
-        /// <param name="isAlternate"></param>
-        internal static void PutHeatSheetInClasses(string dirtyLine, ref Tuple<string, string, string, bool> relayInfo, ref bool isAlternate)
+        internal static List<Swimmer> PutHeatSheetInClasses(List<string> heatSheet)
         {
-            string line = CleanseTheData(dirtyLine);
-            if (line.StartsWith("ALTERNATE"))
-            {
-                isAlternate = true;
-            }
-            if (line.StartsWith('#') || line.StartsWith("EVENT") || Regex.Match(line, @"\bHEAT\s+(\d+)\s?[A-Z]?\s").Success || Regex.Match(line, @"HEAT +\d+ +\(").Success || Regex.Match(line, @"([A-Z]+ )((\d+:)?\d{2}\.\d{2}|X?NT)([A-Z]+-[A-Z]+)\d").Success)
-            {
-                //reset the relay info if we find a new event, heat or team line
-                relayInfo = null;
-            }
+            List<Swimmer> swimmersToReturn = new();
 
-            if (relayInfo == null)
+            bool isAlternate = false;
+            Tuple<string, string, string, bool> relayInfo = null;
+            Swimmer swimmer = new Swimmer();
+
+            foreach (var dirtyLine in heatSheet)
             {
-                FindPatternThatMatches(ref relayInfo, ref isAlternate, line);
-            }
-            else if (Regex.Match(line, RegexExpressions.relaySwimmerPattern).Success) //Relay event
-            {
-                try
+                string line = CleanseTheData(dirtyLine);
+                if (line.StartsWith("ALTERNATE"))
                 {
-                    relayInfo = SwimmerFunctions.ParseRelaySwimmers(line, relayInfo, RegexExpressions.relaySwimmerPattern);
+                    isAlternate = true;
                 }
-                catch (Exception)
+                if (line.StartsWith('#') || line.StartsWith("EVENT") || Regex.Match(line, @"\bHEAT\s+(\d+)\s?[A-Z]?\s").Success || Regex.Match(line, @"HEAT +\d+ +\(").Success || Regex.Match(line, @"([A-Z]+ )((\d+:)?\d{2}\.\d{2}|X?NT)([A-Z]+-[A-Z]+)\d").Success)
                 {
+                    //reset the relay info if we find a new event, heat or team line
                     relayInfo = null;
                 }
+
+                if (relayInfo == null)
+                {
+                    FindPatternThatMatches(ref relayInfo, ref isAlternate, line, swimmer, swimmersToReturn);
+                }
+                else if (Regex.Match(line, RegexExpressions.relaySwimmerPattern).Success) //Relay event
+                {
+                    try
+                    {
+                        relayInfo = SwimmerFunctions.ParseRelaySwimmers(line, relayInfo, RegexExpressions.relaySwimmerPattern);
+                    }
+                    catch (Exception)
+                    {
+                        relayInfo = null;
+                    }
+                }
             }
+            return swimmersToReturn;
         }
 
-        private static void FindPatternThatMatches(ref Tuple<string, string, string, bool> relayInfo, ref bool isAlternate, string line)
+        private static Swimmer? FindPatternThatMatches(ref Tuple<string, string, string, bool> relayInfo, ref bool isAlternate, string line, Swimmer swimmer, List<Swimmer> swimmersToReturn)
         {
-            if (line.Contains("HY-TEK'S ")) { return; } //Skip this header line for improved efficiency in the regex
+            if (line.Contains("HY-TEK'S ")) { return null; } //Skip this header line for improved efficiency in the regex
 
             if (line.StartsWith('#') || line.StartsWith("EVENT")) //This is an event line so we will set the event info
             {
                 isAlternate = false;
-                SwimmerFunctions.ParseEventLine(line);
+                swimmer = SwimmerFunctions.ParseEventLine(line);
             }
             else if (Regex.Match(line, @"\bHEAT\s+(\d+)\s?[A-Z]?\s").Success) //This is a heat line
             {
                 isAlternate = false;
-                SwimmerFunctions.ParseHeatLine(line);
+                swimmer = SwimmerFunctions.ParseHeatLine(line, swimmer);
             }
             else if (Regex.Match(line, @"HEAT +\d+ +\(").Success) //This is a heat line
             {
                 isAlternate = false;
-                SwimmerFunctions.ParseHeatLineOnNewPage(line);
+                swimmer = SwimmerFunctions.ParseHeatLineOnNewPage(line, swimmer);
             }
             else if (Regex.Match(line, RegexExpressions.singleSwimmerPatternSecondary).Success)
             {
-                SwimmerFunctions.ParseIndividualEvent(line, RegexExpressions.singleSwimmerPatternSecondary, isAlternate);
+                swimmer = SwimmerFunctions.ParseIndividualEvent(line, RegexExpressions.singleSwimmerPatternSecondary, isAlternate, swimmer);
+                swimmersToReturn.Add(swimmer);
+                swimmer.Name = string.Empty;
+                swimmer.Age = string.Empty;
+                swimmer.TeamName = string.Empty;
+                swimmer.PBTime = string.Empty;
+                swimmer.LaneNumber = string.Empty;
             }
             else if (Regex.Match(line, RegexExpressions.singleSwimmerPatternMain).Success)
             {
-                SwimmerFunctions.ParseIndividualEvent(line, RegexExpressions.singleSwimmerPatternMain, isAlternate);
+                swimmer = SwimmerFunctions.ParseIndividualEvent(line, RegexExpressions.singleSwimmerPatternMain, isAlternate, swimmer);
+                swimmersToReturn.Add(swimmer);
+                swimmer.Name = string.Empty;
+                swimmer.Age = string.Empty;
+                swimmer.TeamName = string.Empty;
+                swimmer.PBTime = string.Empty;
+                swimmer.LaneNumber = string.Empty;
             }
             else if (Regex.Match(line, RegexExpressions.relayTeamPattern).Success) //Relay event
             {
@@ -82,6 +103,7 @@ namespace HeatSheetHelper.Helpers
                     relayInfo = null;
                 }
             }
+            return swimmer;
         }
 
         private static string SwapLastCommaFirstToFirstLast(string name)
@@ -90,7 +112,7 @@ namespace HeatSheetHelper.Helpers
             name = names[1].Trim() + " " + names[0].Trim();
             return name;
         }
-        internal static void ParseEventLine(string line)
+        internal static Swimmer ParseEventLine(string line)
         {
             // Extract the event number (first number in the line)
             int eventNumber = int.Parse(Regex.Match(line, @"\d+").Value);
@@ -98,89 +120,28 @@ namespace HeatSheetHelper.Helpers
             // Treat the rest of the line (after the event number) as the event name
             string eventName = line.Substring(line.IndexOf(' ') + 1).Trim();
 
-            var parameters = new DynamicParameters();
-            parameters.Add("@eventNumber", eventNumber);
-            parameters.Add("@eventName", eventName);
+            Swimmer current = new Swimmer();
+            current.EventNumber = eventNumber;
+            current.EventName = eventName;
 
-            string commandText = "INSERT INTO Event (eventNumber, eventName) VALUES (@eventNumber, @eventName)";
-            try
-            {
-                App.InMemoryConnection.Execute(commandText, param: parameters, commandType: CommandType.Text);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
+            return current;
         }
-
-        internal static void ParseHeatLine(string line)
+        internal static Swimmer ParseHeatLine(string line, Swimmer swimmer)
         {
-            string commandText = "SELECT eventId FROM Event ORDER BY eventId DESC";
-            var eventId = App.InMemoryConnection.ExecuteScalar<int>(commandText, commandType: CommandType.Text);
+            swimmer.HeatNumber = int.Parse(Regex.Match(line, @"(?<=HEAT +)\d{1,}").Value.Trim());
+            swimmer.StartTime = Regex.Match(line, @"([1-9]|10|11|12):\d{2}\s*(AM|PM)").Value.Trim();
 
-            var parameters = new DynamicParameters();
-            parameters.Add("@eventId", eventId);
-            parameters.Add("@heatNumber", int.Parse(Regex.Match(line, @"(?<=HEAT +)\d{1,}").Value.Trim()));
-            parameters.Add("@startTime", Regex.Match(line, @"([1-9]|10|11|12):\d{2}\s*(AM|PM)").Value.Trim());
-
-            commandText = "INSERT INTO Heat (eventId, heatNumber, startTime) ";
-            commandText += "VALUES (@eventId, @heatNumber, @startTime)";
-
-            try
-            {
-                App.InMemoryConnection.Query(commandText, param: parameters, commandType: CommandType.Text);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString(), ConsoleColor.Red);
-            }
+            return swimmer;
         }
-
-        internal static void ParseHeatLineOnNewPage(string line)
+        internal static Swimmer ParseHeatLineOnNewPage(string line, Swimmer swimmer)
         {
-            string commandText = "SELECT eventId FROM Event ORDER BY eventId DESC";
-            var eventId = App.InMemoryConnection.ExecuteScalar<int>(commandText, commandType: CommandType.Text);
+            swimmer.HeatNumber = int.Parse(Regex.Match(line, @"(?<=HEAT +)\d{1,}").Value.Trim());
+            swimmer.StartTime = String.Empty;
 
-            var parameters = new DynamicParameters();
-            parameters.Add("@eventId", eventId);
-            parameters.Add("@heatNumber", int.Parse(Regex.Match(line, @"(?<=HEAT +)\d{1,}").Value.Trim()));
-            parameters.Add("@startTime", "");
-
-            commandText = "INSERT INTO Heat (eventId, heatNumber, startTime) ";
-            commandText += "VALUES (@eventId, @heatNumber, @startTime)";
-
-            try
-            {
-                App.InMemoryConnection.Query(commandText, param: parameters, commandType: CommandType.Text);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString(), ConsoleColor.Red);
-            }
+            return swimmer;
         }
-        internal static void ParseIndividualEvent(string line, string pattern, bool isAlternate)
+        internal static Swimmer ParseIndividualEvent(string line, string pattern, bool isAlternate, Swimmer swimmer)
         {
-            string commandText = "SELECT heatId FROM Heat ORDER BY heatId DESC";
-            int heatId = App.InMemoryConnection.ExecuteScalar<int>(commandText, commandType: CommandType.Text);
-            commandText = "SELECT MAX(eventId) FROM Event";
-            int latestEventId = App.InMemoryConnection.ExecuteScalar<int>(commandText, commandType: CommandType.Text);
-            commandText = $"SELECT eventId FROM Heat WHERE heatId = {heatId}";
-            int currentEventId = App.InMemoryConnection.ExecuteScalar<int>(commandText, commandType: CommandType.Text);
-
-            if (currentEventId != latestEventId)
-            {
-                var heatParameters = new DynamicParameters();
-                heatParameters.Add("@eventId", latestEventId);
-                heatParameters.Add("@heatNumber", 1);
-                heatParameters.Add("@startTime", Regex.Match(line, @"([1-9]|10|11|12):\d{2}\s*(AM|PM)").Value.Trim());
-
-                commandText = "INSERT INTO Heat (eventId, heatNumber, startTime) ";
-                commandText += "VALUES (@eventId, @heatNumber, @startTime)";
-                App.InMemoryConnection.Query(commandText, param: heatParameters, commandType: CommandType.Text);
-
-                commandText = "SELECT heatId FROM Heat ORDER BY heatId DESC";
-                heatId = App.InMemoryConnection.ExecuteScalar<int>(commandText, commandType: CommandType.Text);
-            }
             Regex regex = new(pattern);
             Match match = regex.Match(line);
 
@@ -191,32 +152,20 @@ namespace HeatSheetHelper.Helpers
                 name = SwapLastCommaFirstToFirstLast(name);
             }
 
-            var parameters = new DynamicParameters();
-            parameters.Add("@heatId", heatId);
-            parameters.Add("@name", name);
-            parameters.Add("@age", match.Groups["age"].Value.Trim());
+            swimmer.Name = name;
+            swimmer.Age = match.Groups["age"].Value.Trim();
             if (isAlternate == true)
             {
-                parameters.Add("@laneNumber", "Alt" + match.Groups["laneNumber"].Value.Trim());
+                swimmer.LaneNumber = "Alt" + match.Groups["laneNumber"].Value.Trim();
             }
             else
             {
-                parameters.Add("@laneNumber", match.Groups["laneNumber"].Value.Trim());
+                swimmer.LaneNumber = match.Groups["laneNumber"].Value.Trim();
             }
-            parameters.Add("@teamName", match.Groups["teamName"].Value.Trim());
-            parameters.Add("@seedTime", match.Groups["seedTime"].Value.Trim());
+            swimmer.TeamName = match.Groups["teamName"].Value.Trim();
+            swimmer.PBTime = match.Groups["seedTime"].Value.Trim();
 
-            commandText = "INSERT INTO Swimmer (heatId, name, age, laneNumber, teamName, seedTime) ";
-            commandText += "VALUES (@heatId, @name, @age, @laneNumber, @teamName, @seedTime)";
-
-            try
-            {
-                App.InMemoryConnection.Query(commandText, param: parameters, commandType: CommandType.Text);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString(), ConsoleColor.Blue);
-            }
+            return swimmer;
         }
         internal static Tuple<string, string, string, bool> ParseRelaySwimmerEventInfo(string line, string pattern)
         {

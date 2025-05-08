@@ -24,8 +24,8 @@
     @if (swimmerNameList.Any())
     {
         <!-- Picker -->
-        <select @bind="SelectedSwimmer" bind:event="onchange" class="dropdown">
-            <option value="" disabled selected>Choose a swimmer</option>
+        <select @onchange="SwimmerPicker_SelectedIndexChanged">
+            <option value="">Select a swimmer</option>
             @foreach (var swimmer in swimmerNameList)
             {
                 <option value="@swimmer">@swimmer</option>
@@ -51,10 +51,10 @@
                     @foreach (var heat in swimmerHeats)
                     {
                         <tr>
-                            <td>@heat.EventNum</td>
-                            <td>@heat.HeatNum</td>
-                            <td>@heat.LaneNum</td>
-                            <td>@heat.EventInfo</td>
+                            <td>@heat.EventNumber</td>
+                            <td>@heat.HeatNumber</td>
+                            <td>@heat.LaneNumber</td>
+                            <td>@heat.EventName</td>
                             <td>@heat.StartTime</td>
                         </tr>
                     }
