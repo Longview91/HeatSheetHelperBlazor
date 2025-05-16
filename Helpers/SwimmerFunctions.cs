@@ -2,6 +2,7 @@
 using HeatSheetHelper.Constants;
 using HeatSheetHelper.Model;
 using HeatSheetHelperBlazor;
+using HeatSheetHelperBlazor.Components.Shared;
 using System.Data;
 using System.Text.RegularExpressions;
 
@@ -9,6 +10,141 @@ namespace HeatSheetHelper.Helpers
 {
     internal class SwimmerFunctions
     {
+        internal static SwimMeet ParseHeatSheetToEvents(List<string> heatSheet)
+        {
+            SwimMeet swimMeet = new();
+            var events = new List<SwimEvent>();
+            SwimEvent currentEvent = null;
+            HeatInfo currentHeat = null;
+
+            foreach (var dirtyLine in heatSheet)
+            {
+                string line = CleanseTheData(dirtyLine);
+
+                // Event line
+                if (line.StartsWith('#') || line.StartsWith("EVENT"))
+                {
+                    // Save previous event if exists
+                    if (currentEvent != null)
+                        events.Add(currentEvent);
+
+                    // Parse event number and details
+                    int eventNumber = 0;
+                    string eventDetails = "";
+                    var match = Regex.Match(line, @"(\d+)\s*(.*)");
+                    if (match.Success)
+                    {
+                        eventNumber = int.Parse(match.Groups[1].Value);
+                        eventDetails = match.Groups[2].Value.Trim();
+                    }
+
+                    currentEvent = new SwimEvent
+                    {
+                        EventNumber = eventNumber,
+                        EventDetails = eventDetails,
+                        Heats = new List<HeatInfo>()
+                    };
+                    currentHeat = null;
+                }
+                // Heat line
+                else if (Regex.Match(line, @"\bHEAT\s+(\d+)").Success)
+                {
+                    // Save previous heat if exists
+                    if (currentHeat != null && currentEvent != null)
+                        currentEvent.Heats.Add(currentHeat);
+
+                    // Parse heat number and start time
+                    var heatMatch = Regex.Match(line, @"HEAT\s+(\d+)");
+                    int heatNumber = heatMatch.Success ? int.Parse(heatMatch.Groups[1].Value) : 0;
+                    var timeMatch = Regex.Match(line, @"([1-9]|10|11|12):\d{2}\s*(AM|PM)");
+                    string startTime = timeMatch.Success ? timeMatch.Value.Trim() : "";
+
+                    currentHeat = new HeatInfo
+                    {
+                        HeatNumber = heatNumber,
+                        StartTime = startTime,
+                        LaneInfos = new List<LaneInfo>().AsQueryable()
+                    };
+                }
+                // Lane/Swimmer line (individual)
+                else if (Regex.Match(line, RegexExpressions.singleSwimmerPatternMain).Success)
+                {
+                    var regex = new Regex(RegexExpressions.singleSwimmerPatternMain);
+                    var match = regex.Match(line);
+                    if (match.Success)
+                    {
+                        var laneInfo = new LaneInfo
+                        {
+                            LaneNumber = int.TryParse(match.Groups["laneNumber"].Value.Trim(), out int ln) ? ln : 0,
+                            TeamName = match.Groups["teamName"].Value.Trim(),
+                            SeedTime = match.Groups["seedTime"].Value.Trim(),
+                            SwimmerName = SwapLastCommaFirstToFirstLast(match.Groups["name"].Value.Trim()),
+                            SwimmerAge = int.TryParse(match.Groups["age"].Value.Trim(), out int age) ? age : 0
+                        };
+                        if (currentHeat == null && currentEvent != null)
+                        {
+                            // Create sign-up heat 100
+                            currentHeat = new HeatInfo
+                            {
+                                HeatNumber = 100,
+                                StartTime = string.Empty,
+                                LaneInfos = new List<LaneInfo>().AsQueryable()
+                            };
+                            currentEvent.Heats.Add(currentHeat);
+                        }
+                        if (currentHeat != null)
+                        {
+                            var lanes = currentHeat.LaneInfos.ToList();
+                            lanes.Add(laneInfo);
+                            currentHeat.LaneInfos = lanes.AsQueryable();
+                        }
+                    }
+                }
+                // Lane/Swimmer line (secondary pattern)
+                else if (Regex.Match(line, RegexExpressions.singleSwimmerPatternSecondary).Success)
+                {
+                    var regex = new Regex(RegexExpressions.singleSwimmerPatternSecondary);
+                    var match = regex.Match(line);
+                    if (match.Success)
+                    {
+                        var laneInfo = new LaneInfo
+                        {
+                            LaneNumber = int.TryParse(match.Groups["laneNumber"].Value.Trim(), out int ln) ? ln : 0,
+                            TeamName = match.Groups["teamName"].Value.Trim(),
+                            SeedTime = match.Groups["seedTime"].Value.Trim(),
+                            SwimmerName = SwapLastCommaFirstToFirstLast(match.Groups["name"].Value.Trim()),
+                            SwimmerAge = int.TryParse(match.Groups["age"].Value.Trim(), out int age) ? age : 0
+                        };
+                        if (currentHeat == null && currentEvent != null)
+                        {
+                            // Create sign-up heat 100
+                            currentHeat = new HeatInfo
+                            {
+                                HeatNumber = 100,
+                                StartTime = string.Empty,
+                                LaneInfos = new List<LaneInfo>().AsQueryable()
+                            };
+                            currentEvent.Heats.Add(currentHeat);
+                        }
+                        if (currentHeat != null)
+                        {
+                            var lanes = currentHeat.LaneInfos.ToList();
+                            lanes.Add(laneInfo);
+                            currentHeat.LaneInfos = lanes.AsQueryable();
+                        }
+                    }
+                }
+                // (Relay parsing would go here, similar to above)
+            }
+            // Add the last heat and event if needed
+            if (currentHeat != null && currentEvent != null)
+                currentEvent.Heats.Add(currentHeat);
+            if (currentEvent != null)
+                events.Add(currentEvent);
+
+            swimMeet.SwimEvents = events;
+            return swimMeet;
+        }
 
         /// <summary>
         /// 
@@ -292,58 +428,12 @@ namespace HeatSheetHelper.Helpers
                 return null;
             }
         }
-        internal static void ShortenEventName(ref string eventName, string distance, bool isRelay)
-        {
-            string relay;
-            string shortEvent;
-            if (!isRelay)
-            {
-                if (eventName.Contains("FREESTYLE"))
-                {
-                    shortEvent = "FR";
-                }
-                else if (eventName.Contains("BUTTER")) //Weird situation where the f is a Beta character
-                {
-                    shortEvent = "FL";
-                }
-                else if (eventName.Contains("BACKSTROKE"))
-                {
-                    shortEvent = "BA";
-                }
-                else if (eventName.Contains("BREASTSTROKE"))
-                {
-                    shortEvent = "BR";
-                }
-                else { shortEvent = "IM"; }
-                relay = "";
-            }
-            else
-            {
-                if (eventName.Contains("FREESTYLE"))
-                {
-                    shortEvent = "FR";
-                }
-                else if (eventName.Contains("BUTTER")) //Weird situation where the f is a Beta character
-                {
-                    shortEvent = "FL";
-                }
-                else if (eventName.Contains("BACKSTROKE"))
-                {
-                    shortEvent = "BA";
-                }
-                else if (eventName.Contains("BREASTSTROKE"))
-                {
-                    shortEvent = "BR";
-                }
-                else { shortEvent = "MD"; }
-                relay = "RELAY";
-            }
-            eventName = (distance + " " + shortEvent + " " + relay).Trim();
-        }
+        
         private static string CleanseTheData(string line)
         {
             return Regex.Replace(line, @"Β", "F").ToUpper(); //@"[^\d\s\w,:\-.'\/\!\@\#\$\%\^\&\*\(\)]", "?");
         }
+ 
         internal static void FillEmptyTimes()
         {
             string commandText = "SELECT heatId FROM Heat h WHERE h.startTime = ''";

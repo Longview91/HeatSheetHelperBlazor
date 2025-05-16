@@ -21,7 +21,7 @@
     <!-- Entry -->
     <input type="text" class="grid-label-style" placeholder="Choose a heat sheet to start" style="display: none;" @oninput="SwimmerEditor_TextChanged" />
 *@
-    @if (swimmerNameList.Any())
+    @if (swimMeet != null)
     {
         <!-- Picker -->
         <select @onchange="SwimmerPicker_SelectedIndexChanged">
@@ -33,7 +33,7 @@
         </select>
     }
 
-    @if (swimmerHeats.Any())
+    @if (swimMeet != null)
     {
         <div class="heats-grid">
             <h4>Heats for @SelectedSwimmer</h4>
@@ -52,7 +52,7 @@
                     {
                         <tr>
                             <td>@heat.EventNumber</td>
-                            <td>@heat.HeatNumber</td>
+                            <td>@(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())</td>
                             <td>@heat.LaneNumber</td>
                             <td>@heat.EventName</td>
                             <td>@heat.StartTime</td>
