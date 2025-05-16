@@ -26,13 +26,20 @@ namespace HeatSheetHelperBlazor.Components.Pages
         {
             try
             {
-                allSwimmers.Clear();
-
-                var fileResult = await FilePicker.PickAsync(new PickOptions
+                if (allSwimmers != null)
                 {
-                    PickerTitle = "Pick the heat sheet please",
-                    FileTypes = FilePickerFileType.Pdf
-                });
+                    allSwimmers.Clear();
+                }
+                else
+                {
+                    allSwimmers = new List<Swimmer>();
+                }
+
+                    var fileResult = await FilePicker.PickAsync(new PickOptions
+                    {
+                        PickerTitle = "Pick the heat sheet please",
+                        FileTypes = FilePickerFileType.Pdf
+                    });
 
                 if (fileResult == null)
                     return;

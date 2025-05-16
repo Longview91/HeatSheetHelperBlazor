@@ -63,7 +63,7 @@ namespace HeatSheetHelper.Helpers
 
         private static Swimmer? FindPatternThatMatches(ref Tuple<string, string, string, bool> relayInfo, ref bool isAlternate, string line, Swimmer swimmer, List<Swimmer> swimmersToReturn)
         {
-            if (line.Contains("HY-TEK'S ")) { return null; } //Skip this header line for improved efficiency in the regex
+            if (line.Contains("HY-TEK'S ")) { return swimmer; } //Skip this header line for improved efficiency in the regex
 
             if (line.StartsWith('#') || line.StartsWith("EVENT")) //This is an event line so we will set the event info
             {
