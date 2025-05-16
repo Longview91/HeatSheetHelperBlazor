@@ -1,40 +1,49 @@
-﻿@page "/AllEvents"
+﻿@page "/allevents"
+@using HeatSheetHelperBlazor.Components.Shared
+@using HeatSheetHelperBlazor.Services
+@inject MeetDataService MeetDataService
 
 <h3>All Events</h3>
 
-@if (allEvents is null)
+@if (MeetDataService.SwimMeet?.SwimEvents != null)
 {
-    <h6>Loading ... </h6>
+    foreach (var swimEvent in MeetDataService.SwimMeet.SwimEvents)
+    {
+        foreach (var heat in swimEvent.Heats)
+        {
+            <table class="table all-events-table">
+                <thead>
+                    <tr>
+                        <th colspan="5" class="event-header">
+                            Event @swimEvent.EventNumber: @swimEvent.EventDetails
+                            | Heat @(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())
+                        </th>
+                    </tr>
+                    <tr>
+                        <th>Lane</th>
+                        <th>Swimmer</th>
+                        <th>Age</th>
+                        <th>Team</th>
+                        <th>Seed Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var lane in heat.LaneInfos)
+                    {
+                        <tr>
+                            <td>@(lane.LaneNumber == 0 ? "" : lane.LaneNumber.ToString())</td>
+                            <td>@lane.SwimmerName</td>
+                            <td>@(lane.SwimmerAge == 0 ? "" : lane.SwimmerAge.ToString())</td>
+                            <td>@lane.TeamName</td>
+                            <td>@lane.SeedTime</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
 }
 else
 {
-    <div class="eventHeader">
-        @foreach (var anEvent in allEvents) {            
-            <h4>
-                <font color="white">
-                    #@anEvent.EventNumber @anEvent.EventDetails
-                </font>
-            </h4>
-            @foreach (var heat in anEvent.Heats)
-            {
-                <h5>
-                    <font color="white">
-                        Heat @heat.HeatNumber - Start time: @heat.StartTime
-                    </font>
-                </h5>
-                <div class="grid">
-                    <QuickGrid Items="@heat.LaneInfos">
-                        <PropertyColumn Property="@(a => a.LaneNumber)" Title="Lane" />
-                        <PropertyColumn Property="@(a => a.SwimmerName)" Title="Name" />
-                        <PropertyColumn Property="@(a => a.SwimmerAge)" Title="Age" />
-                        <PropertyColumn Property="@(a => a.SeedTime)" Title="Seed Time" />
-                    </QuickGrid>
-                </div>
-            }
-        }
-</div>    
-}
-
-@code {
-
+    <p>No events loaded.</p>
 }

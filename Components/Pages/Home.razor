@@ -1,11 +1,10 @@
 ﻿@page "/"
-
 @using HeatSheetHelper.Model
 @using HeatSheetHelper.Helpers
 
 <PageTitle>Main Page</PageTitle>
 
-<h3>Main Page</h3>
+<h3>Heat Sheet Helper</h3>
 
 <div class="grid" style="display: grid; grid-template-rows: 35px auto auto auto 1fr auto; padding: 3px;">
     <!-- Button -->
@@ -13,14 +12,6 @@
         Choose a Heat Sheet
     </button>
 
-    @*     <!-- Label with Tap Gesture -->
-    <label class="grid-label-style" style="width: 60px; font-size: 11px; display: none;" @onclick="TapGestureRecognizer_Tapped">
-        Tap Me For All Events
-    </label>
-
-    <!-- Entry -->
-    <input type="text" class="grid-label-style" placeholder="Choose a heat sheet to start" style="display: none;" @oninput="SwimmerEditor_TextChanged" />
-*@
     @if (swimMeet != null)
     {
         <!-- Picker -->
@@ -40,11 +31,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Event</th>
-                        <th>Heat</th>
-                        <th>Lane</th>
+                        <th>E</th>
+                        <th>H</th>
+                        <th>L</th>
                         <th>Event Name</th>
-                        <th>Start Time</th>
+                            <th width="95">Start Time</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -66,43 +57,4 @@
     {
         <div></div>
     }
-
-@*    <!-- Label -->
-    <label class="grid-label-style" style="display: none;">
-        Tap a heat below to display the full heat
-    </label>
-
-    <!-- CollectionView -->
-    <div class="collection-view" style="display: none;" @onchange="OnGridItemTapped">
-        <div class="title-grid" style="display: grid; grid-template-columns: auto auto auto 115fr auto 80px; column-gap: 7px; padding: 5px;">
-            <label class="grid-header-label-style">E</label>
-            <label class="grid-header-label-style">H</label>
-            <label class="grid-header-label-style">L</label>
-            <label class="grid-header-label-style" style="text-align: center;">Event</label>
-            <label class="grid-header-label-style" style="text-align: end;">Start Time</label>
-            <label class="grid-header-label-style" style="text-align: end;">PB Time</label>
-            <div class="box-view-style" style="height: 0.01px;"></div>
-        </div>
-
-        @foreach (var eventGrid in EventGrids)
-        {
-            <div class="grid" style="display: grid; grid-template-columns: auto auto auto 15fr auto 80px; column-gap: 5px; padding: 5px;">
-                <label class="grid-label-style" style="grid-column: 3 / span 6; font-size: 12px;">@eventGrid.SwimmerName</label>
-                <label class="grid-label-style" style="grid-column: 4 / span 2; font-weight: bold;">@eventGrid.HeatCount</label>
-
-                <label class="grid-label-style">@eventGrid.EventNum</label>
-                <label class="grid-label-style">@eventGrid.HeatNum</label>
-                <label class="grid-label-style">@eventGrid.LaneNum</label>
-                <label class="grid-label-style">@eventGrid.EventName</label>
-                <label class="grid-label-style">@eventGrid.EventTime</label>
-                <label class="grid-label-style">@eventGrid.PBTime</label>
-                <div class="box-view-style" style="height: 0.01px;"></div>
-            </div>
-        }
-    </div>
-
-    <!-- Disclaimer -->
-    <label class="grid-label-style" style="font-size: 10px; color: red; text-align: center; align-self: end;">
-        Disclaimer: This app is not official and may miss data. Please review the actual heat sheet to verify these results are correct.
-    </label> *@
 </div>

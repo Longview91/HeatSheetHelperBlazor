@@ -26,7 +26,15 @@ namespace HeatSheetHelper.Helpers
                 {
                     // Save previous event if exists
                     if (currentEvent != null)
+                    {
+                        // Save any pending heat to the previous event
+                        if (currentHeat != null && currentHeat.HeatNumber != 100)
+                        {
+                            currentEvent.Heats.Add(currentHeat);
+                            currentHeat = null;
+                        }
                         events.Add(currentEvent);
+                    }
 
                     // Parse event number and details
                     int eventNumber = 0;
@@ -50,8 +58,11 @@ namespace HeatSheetHelper.Helpers
                 else if (Regex.Match(line, @"\bHEAT\s+(\d+)").Success)
                 {
                     // Save previous heat if exists
-                    if (currentHeat != null && currentEvent != null)
+                    if (currentHeat != null && currentHeat.HeatNumber != 100 && currentEvent != null)
+                    {
                         currentEvent.Heats.Add(currentHeat);
+                        currentHeat = null;
+                    }
 
                     // Parse heat number and start time
                     var heatMatch = Regex.Match(line, @"HEAT\s+(\d+)");
@@ -83,14 +94,18 @@ namespace HeatSheetHelper.Helpers
                         };
                         if (currentHeat == null && currentEvent != null)
                         {
-                            // Create sign-up heat 100
-                            currentHeat = new HeatInfo
+                            // Only create and add sign-in heat if it doesn't exist
+                            currentHeat = currentEvent.Heats.FirstOrDefault(h => h.HeatNumber == 100);
+                            if (currentHeat == null)
                             {
-                                HeatNumber = 100,
-                                StartTime = string.Empty,
-                                LaneInfos = new List<LaneInfo>().AsQueryable()
-                            };
-                            currentEvent.Heats.Add(currentHeat);
+                                currentHeat = new HeatInfo
+                                {
+                                    HeatNumber = 100,
+                                    StartTime = string.Empty,
+                                    LaneInfos = new List<LaneInfo>().AsQueryable()
+                                };
+                                currentEvent.Heats.Add(currentHeat);
+                            }
                         }
                         if (currentHeat != null)
                         {
@@ -117,14 +132,18 @@ namespace HeatSheetHelper.Helpers
                         };
                         if (currentHeat == null && currentEvent != null)
                         {
-                            // Create sign-up heat 100
-                            currentHeat = new HeatInfo
+                            // Only create and add sign-in heat if it doesn't exist
+                            currentHeat = currentEvent.Heats.FirstOrDefault(h => h.HeatNumber == 100);
+                            if (currentHeat == null)
                             {
-                                HeatNumber = 100,
-                                StartTime = string.Empty,
-                                LaneInfos = new List<LaneInfo>().AsQueryable()
-                            };
-                            currentEvent.Heats.Add(currentHeat);
+                                currentHeat = new HeatInfo
+                                {
+                                    HeatNumber = 100,
+                                    StartTime = string.Empty,
+                                    LaneInfos = new List<LaneInfo>().AsQueryable()
+                                };
+                                currentEvent.Heats.Add(currentHeat);
+                            }
                         }
                         if (currentHeat != null)
                         {
@@ -136,9 +155,14 @@ namespace HeatSheetHelper.Helpers
                 }
                 // (Relay parsing would go here, similar to above)
             }
-            // Add the last heat and event if needed
-            if (currentHeat != null && currentEvent != null)
+            // Add any remaining heat to the last event
+            if (currentHeat != null && currentHeat.HeatNumber != 100 && currentEvent != null)
+            {
                 currentEvent.Heats.Add(currentHeat);
+                currentHeat = null;
+            }
+
+            // Add the last event if it exists
             if (currentEvent != null)
                 events.Add(currentEvent);
 

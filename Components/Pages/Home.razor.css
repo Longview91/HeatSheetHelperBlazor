@@ -1,0 +1,37 @@
+﻿/* Make the table full width and add grid lines */
+.heats-grid table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1em;
+    background: #fff;
+}
+
+.heats-grid th,
+.heats-grid td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+    font-size: 0.8em;
+}
+
+.heats-grid th {
+    background: #f5f5f5;
+    color: #333;
+    font-weight: bold;
+    font-size: 1.0em;
+}
+
+.heats-grid tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+.heats-grid tr:hover {
+    background: #e6f2ff;
+}
+
+.heats-grid h4 {
+    margin-top: 1.5em;
+    color: #2a4d7a;
+    font-size: 1.2em;
+    font-weight: bold;
+}

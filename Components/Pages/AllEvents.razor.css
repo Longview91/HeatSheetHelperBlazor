@@ -4,6 +4,7 @@
     outline-color: black;
     outline-style: groove;
     outline-width: 2px;
+    color: white;
 }
 
 .grid {
@@ -15,4 +16,24 @@
     border-bottom-color: white;
     border-style: groove;
     border-width: 3px;
+}
+
+.all-events-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .all-events-table th,
+    .all-events-table td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+        font-size: 0.8em;
+    }
+
+.event-header {
+    background: darkred;
+    font-weight: bold;
+    font-size: 1.0em;
+    color: white;
 }

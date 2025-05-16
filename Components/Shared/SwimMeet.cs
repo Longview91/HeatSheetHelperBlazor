@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace HeatSheetHelperBlazor.Components.Shared
 {
-    internal class SwimMeet
+    public class SwimMeet
     {
         List<SwimEvent> swimEvents;
 

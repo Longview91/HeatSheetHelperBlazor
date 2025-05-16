@@ -1,4 +1,4 @@
-﻿using HeatSheetHelper.Helpers;
+﻿using HeatSheetHelperBlazor.Services;
 using Microsoft.Extensions.Logging;
 
 namespace HeatSheetHelperBlazor;
@@ -16,7 +16,7 @@ public static class MauiProgram
 			});
 
         builder.Services.AddMauiBlazorWebView();
-        builder.Services.AddSingleton<DbHelper>();
+		builder.Services.AddSingleton<MeetDataService>();
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();

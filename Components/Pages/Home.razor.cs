@@ -1,22 +1,18 @@
 ﻿using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using System.Text.RegularExpressions;
-using Dapper;
 using HeatSheetHelper.Helpers;
-using System.Collections.ObjectModel;
 using HeatSheetHelper.Model;
 using Microsoft.AspNetCore.Components;
-using HeatSheetHelperBlazor;
-using HeatSheetHelperBlazor.Components;
-using Microsoft.AspNetCore.Components.Web;
-using System.Threading.Tasks;
 using HeatSheetHelperBlazor.Components.Shared;
 using HeatSheetHelperBlazor.Models;
+using HeatSheetHelperBlazor.Services;
 
 namespace HeatSheetHelperBlazor.Components.Pages
 {
     public partial class Home
     {
+        [Inject] public MeetDataService MeetDataService { get; set; } = new();
         private ErrorModal ErrorModal = new();
         private List<string> swimmerNameList = new();
         private List<SwimmerHeatRow> swimmerHeats = new();
@@ -57,16 +53,12 @@ namespace HeatSheetHelperBlazor.Components.Pages
                     heatSheet.AddRange(Regex.Split(pdfText, "\n").ToList());
                 }
 
-                Tuple<string, string, string, bool> relayInfo = null;
-                bool isAlternate = false;
-
                 swimMeet = SwimmerFunctions.ParseHeatSheetToEvents(heatSheet);
-                //allSwimmers = SwimmerFunctions.PutHeatSheetInClasses(heatSheet);
+                MeetDataService.SwimMeet = swimMeet;
 
                 SwimmerFunctions.FillEmptyTimes();
 
                 await PopulateSwimmerNameList();
-                //await CreateInitialList();
 
             }
             catch (Exception ex)
@@ -90,20 +82,6 @@ namespace HeatSheetHelperBlazor.Components.Pages
                 .OrderBy(name => name)
                 .ToList();
             });
-        }
-
-        private async Task CreateInitialList()
-        {
-            swimmerNameList = await Task.Run(() =>
-            {
-                return allSwimmers
-                .Select(s => s.Name)
-                .Distinct()
-                .OrderBy(name => name)
-                .ToList();
-            });
-
-            StateHasChanged();
         }
 
         private async Task SwimmerPicker_SelectedIndexChanged(ChangeEventArgs e)
