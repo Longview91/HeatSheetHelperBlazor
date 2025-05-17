@@ -2,7 +2,6 @@
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using System.Text.RegularExpressions;
 using HeatSheetHelper.Helpers;
-using HeatSheetHelper.Model;
 using Microsoft.AspNetCore.Components;
 using HeatSheetHelperBlazor.Components.Shared;
 using HeatSheetHelperBlazor.Models;
@@ -16,7 +15,6 @@ namespace HeatSheetHelperBlazor.Components.Pages
         private ErrorModal ErrorModal = new();
         private List<string> swimmerNameList = new();
         private List<SwimmerHeatRow> swimmerHeats = new();
-        private List<Swimmer> allSwimmers = new();
         private SwimMeet swimMeet;
 
         public string? SelectedSwimmer { get; private set; }
@@ -25,15 +23,6 @@ namespace HeatSheetHelperBlazor.Components.Pages
         {
             try
             {
-                if (allSwimmers != null)
-                {
-                    allSwimmers.Clear();
-                }
-                else
-                {
-                    allSwimmers = new List<Swimmer>();
-                }
-
                     var fileResult = await FilePicker.PickAsync(new PickOptions
                     {
                         PickerTitle = "Pick the heat sheet please",
@@ -56,7 +45,7 @@ namespace HeatSheetHelperBlazor.Components.Pages
                 swimMeet = SwimmerFunctions.ParseHeatSheetToEvents(heatSheet);
                 MeetDataService.SwimMeet = swimMeet;
 
-                SwimmerFunctions.FillEmptyTimes();
+                //SwimmerFunctions.FillEmptyTimes();
 
                 await PopulateSwimmerNameList();
 
