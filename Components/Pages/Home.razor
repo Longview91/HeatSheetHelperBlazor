@@ -6,29 +6,25 @@
 
 <h3>Heat Sheet Helper</h3>
 
-<div class="grid" style="display: grid; grid-template-rows: 35px auto auto auto 1fr auto; padding: 3px;">
-    <!-- Button -->
-    <button class="button-style" @onclick="OnPDFPickClicked" style="max-width: 170px; align-self: center;">
-        Choose a Heat Sheet
-    </button>
+<div class="grid" style="display: grid; padding: 3px;">
 
     @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
     {
         <!-- TextBox -->
         <input type="text"
-               placeholder="Type to filter swimmers..."
-               @bind="SwimmerListService.SwimmerFilter"
-               @bind:event="oninput"
-               style="margin-bottom: 8px; width: 100%; max-width: 300px;" />
+        placeholder="Type to filter swimmers..."
+        @bind="SwimmerListService.SwimmerFilter"
+        @bind:event="oninput"
+        style="margin-bottom: 8px; width: 100%; max-width: 300px;" />
 
         <!-- Multi-select checkboxes -->
-        <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 4px; margin-bottom: 8px;">
+        <div style="max-height: 100px; overflow-y: auto; border: 1px solid #ccc; padding: 4px; margin-bottom: 8px;">
             @foreach (var swimmer in SwimmerListService.FilteredSwimmerNames)
             {
                 <label style="display: block;">
                     <input type="checkbox"
-                           checked="@SwimmerListService.SelectedSwimmers.Contains(swimmer)"
-                           @onchange="() => ToggleSwimmer(swimmer)" />
+                    checked="@SwimmerListService.SelectedSwimmers.Contains(swimmer)"
+                    @onchange="() => ToggleSwimmer(swimmer)" />
                     @swimmer
                 </label>
             }
@@ -45,9 +41,8 @@
                         <th>E</th>
                         <th>H</th>
                         <th>L</th>
-                        <th>Swimmer Name</th>
-                        <th>Event Name</th>
-                        <th width="95">Start Time</th>
+                        <th>Event &amp; Swimmer Name</th>
+                        <th>Start Time</th>
                         <th>Seed Time</th>
                     </tr>
                 </thead>
@@ -58,8 +53,7 @@
                             <td>@heat.EventNumber</td>
                             <td>@(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())</td>
                             <td>@heat.LaneNumber</td>
-                            <td>@heat.SwimmerName</td>
-                            <td>@heat.EventName</td>
+                            <td>@(heat.EventName+"\n")<strong>@heat.SwimmerName</strong></td>
                             <td>@heat.StartTime</td>
                             <td>@heat.SeedTime</td>
                         </tr>
@@ -72,4 +66,12 @@
     {
         <div></div>
     }
+</div>
+
+<div style="display: flex; justify-content: center; align-items: center; margin-top: 24px; margin-bottom: 24px;">
+    <button class="button-style" @onclick="OnPDFPickClicked" style="max-width: 170px;">
+        @(MeetDataService.SwimMeet.SwimEvents.Count == 0
+        ? "Choose a Heat Sheet"
+        : "Choose a different Heat Sheet")
+    </button>
 </div>

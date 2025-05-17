@@ -1,16 +1,17 @@
-﻿/* Make the table full width and add grid lines */
-.heats-grid table {
+﻿.heats-grid table {
     width: 100%;
+    table-layout: auto;
     border-collapse: collapse;
-    margin-top: 1em;
     background: #fff;
 }
 
 .heats-grid th,
 .heats-grid td {
     border: 1px solid #ccc;
-    padding: 8px;
+    padding: 0px;
     text-align: left;
+    white-space: break-spaces;
+    word-break: break-word;
     font-size: 0.8em;
 }
 
@@ -18,20 +19,44 @@
     background: #f5f5f5;
     color: #333;
     font-weight: bold;
-    font-size: 1.0em;
 }
 
-.heats-grid tr:nth-child(even) {
-    background: #f9f9f9;
+.heats-grid th:nth-child(1),
+.heats-grid td:nth-child(1), /* E */
+.heats-grid th:nth-child(2),
+.heats-grid td:nth-child(2), /* H */
+.heats-grid th:nth-child(3),
+.heats-grid td:nth-child(3) /* L */ {
+    width: 4vw;
+    min-width: 30px;
+    max-width: 40px;
+    text-align: center;
 }
 
-.heats-grid tr:hover {
-    background: #e6f2ff;
+.heats-grid th:nth-child(4),
+.heats-grid td:nth-child(4) /* Event & Swimmer Name */ {
+    width: 30vw;
+    min-width: 140px;
+    max-width: 300px;
 }
 
-.heats-grid h4 {
-    margin-top: 1.5em;
-    color: #2a4d7a;
-    font-size: 1.2em;
-    font-weight: bold;
+.heats-grid th:nth-child(5),
+.heats-grid td:nth-child(5) /* Start Time */ {
+    width: 10vw;
+    min-width: 60px;
+    max-width: 100px;
 }
+
+.heats-grid th:nth-child(6),
+.heats-grid td:nth-child(6) /* Seed Time */ {
+    width: 10vw;
+    min-width: 60px;
+    max-width: 100px;
+}
+
+.event-swimmer-cell > div {
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+}
+

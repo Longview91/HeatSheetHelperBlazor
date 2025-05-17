@@ -17,13 +17,13 @@
                         <th colspan="5" class="event-header">
                             Event @swimEvent.EventNumber: @swimEvent.EventDetails
                             | Heat @(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())
+                            | at @heat.StartTime
                         </th>
                     </tr>
                     <tr>
                         <th>Lane</th>
-                        <th>Swimmer</th>
+                        <th><div>Swimmer</div><div>Team</div></th>
                         <th>Age</th>
-                        <th>Team</th>
                         <th>Seed Time</th>
                     </tr>
                 </thead>
@@ -32,9 +32,8 @@
                     {
                         <tr>
                             <td>@(lane.LaneNumber == 0 ? "" : lane.LaneNumber.ToString())</td>
-                            <td>@lane.SwimmerName</td>
+                            <td><div><strong>@lane.SwimmerName</strong></div><div>@lane.TeamName @lane.RelayTeamLetter</div></td>
                             <td>@(lane.SwimmerAge == 0 ? "" : lane.SwimmerAge.ToString())</td>
-                            <td>@lane.TeamName</td>
                             <td>@lane.SeedTime</td>
                         </tr>
                     }

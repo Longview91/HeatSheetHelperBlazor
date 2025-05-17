@@ -8,8 +8,23 @@ main {
     flex: 1;
 }
 
+/* Make the nav menu fixed at the top */
+nav, .nav-menu {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: #fff; /* Ensure background covers content behind */
+    background-color: rgba(139, 0, 0, 0.9);
+    box-shadow: rgba(0,0,0,0,4) 10px 20px;
+}
+
+/* Add padding to the page content so it doesn't go under the nav */
+.main-layout .content {
+    padding-top: 56px; /* Adjust to match your nav height */
+}
+
 .sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    background-image: linear-gradient(180deg, #b71c1c 0%, #880808 70%);
 }
 
 .top-row {

@@ -15,6 +15,10 @@ namespace HeatSheetHelper.Helpers
             var events = new List<SwimEvent>();
             SwimEvent currentEvent = null;
             HeatInfo currentHeat = null;
+            int currentRelayLane = 0;
+            string currentRelayTeamName = null;
+            string currentRelayTeamLetter = null;
+            string currentRelaySeedTime = null;
 
             foreach (var dirtyLine in heatSheet)
             {
@@ -156,10 +160,19 @@ namespace HeatSheetHelper.Helpers
                         }
                     }
                 }
+                // Relay team line
+                else if (Regex.Match(line, RegexExpressions.relayTeamPattern).Success)
+                {
+                    var match = Regex.Match(line, RegexExpressions.relayTeamPattern);
+                    currentRelaySeedTime = match.Groups["seedTime"].Value.Trim();
+                    currentRelayTeamName = match.Groups["teamName"].Value.Trim();
+                    currentRelayTeamLetter = match.Groups["relayTeamLetter"].Value.Trim();
+                    currentRelayLane = int.TryParse(match.Groups["laneNumber"].Value.Trim(), out int ln) ? ln : 0;
+                }
                 // Relay swimmer line
                 else if (Regex.Match(line, RegexExpressions.relaySwimmerPattern).Success)
                 {
-                    ParseRelaySwimmers(line, currentHeat, RegexExpressions.relaySwimmerPattern);
+                    ParseRelaySwimmers(line, currentHeat, currentRelayLane, currentRelayTeamName, currentRelayTeamLetter, currentRelaySeedTime, RegexExpressions.relaySwimmerPattern);
                 }
             }
             // Add any remaining heat to the last event
@@ -194,7 +207,7 @@ namespace HeatSheetHelper.Helpers
             var infoToReturn = new Tuple<string, string, string, bool>(seedTime, teamName, laneNumber, false);
             return infoToReturn;
         }
-        internal static void ParseRelaySwimmers(string line, HeatInfo currentHeat, string relayPattern)
+        internal static void ParseRelaySwimmers(string line, HeatInfo currentHeat, int currentRelayLane, string currentRelayTeamName, string currentRelayTeamLetter, string currentRelaySeedTime, string relayPattern)
         {
             if (currentHeat == null) return;
 
@@ -210,10 +223,10 @@ namespace HeatSheetHelper.Helpers
 
             var firstLaneInfo = new LaneInfo
             {
-                LaneNumber = int.TryParse(match.Groups["laneNumber"].Value.Trim(), out int ln) ? ln : 0,
-                TeamName = match.Groups["teamName"].Value.Trim(),
-                RelayTeamLetter = match.Groups["relayTeamLetter"].Value.Trim(),
-                SeedTime = match.Groups["seedTime"].Value.Trim(),
+                LaneNumber = currentRelayLane,
+                TeamName = currentRelayTeamName,
+                RelayTeamLetter = currentRelayTeamLetter,
+                SeedTime = currentRelaySeedTime,
                 SwimmerName = firstName,
                 SwimmerAge = int.TryParse(match.Groups["age1"].Value.Trim(), out int age1) ? age1 : 0,
                 isAlternate = false
@@ -241,113 +254,10 @@ namespace HeatSheetHelper.Helpers
             lanes.Add(secondLaneInfo);
             currentHeat.LaneInfos = lanes.AsQueryable();
         }
-        //internal static Tuple<string, string, string, bool> ParseRelaySwimmers(string line, Tuple<string, string, string, bool> relayInfo, string relayPattern)
-        //{
-        //    int heatId;
-        //    string commandText;
-        //    try
-        //    {
-        //        commandText = "SELECT heatId FROM Heat ORDER BY heatId DESC";
-        //        heatId = App.InMemoryConnection.ExecuteScalar<int>(commandText, commandType: CommandType.Text);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine(ex.ToString(), ConsoleColor.Red);
-        //        return null;
-        //    }
-        //    Regex regex = new(relayPattern);
-        //    Match match = regex.Match(line);
-
-        //    var firstName = match.Groups["name1"].Value.Trim();
-        //    if (firstName.Contains(','))
-        //    {
-        //        firstName = SwapLastCommaFirstToFirstLast(firstName);
-        //    }
-        //    var secondName = match.Groups["name2"].Value.Trim();
-        //    if (secondName.Contains(','))
-        //    {
-        //        secondName = SwapLastCommaFirstToFirstLast(secondName);
-        //    }
-
-        //    try
-        //    {
-        //        var parameters = new DynamicParameters();
-        //        parameters.Add("@heatId", heatId);
-        //        parameters.Add("@name1", firstName);
-        //        parameters.Add("@name2", secondName);
-        //        parameters.Add("@age1", match.Groups["age1"].Value.Trim());
-        //        parameters.Add("@age2", match.Groups["age2"].Value.Trim());
-        //        parameters.Add("@seedTime", relayInfo.Item1);
-        //        parameters.Add("@teamName", relayInfo.Item2);
-        //        parameters.Add("@laneNumber", relayInfo.Item3);
-
-        //        commandText = "INSERT INTO Swimmer (heatId, name, age, laneNumber, teamName, seedTime) ";
-        //        commandText += "VALUES (@heatId, @name1, @age1, @laneNumber, @teamName, @seedTime)";
-
-        //        //App.InMemoryConnection.Query(commandText, param: parameters, commandType: CommandType.Text);
-
-        //        commandText = "INSERT INTO Swimmer (heatId, name, age, laneNumber, teamName, seedTime) ";
-        //        commandText += "VALUES (@heatId, @name2, @age2, @laneNumber, @teamName, @seedTime)";
-
-        //        //App.InMemoryConnection.Query(commandText, param: parameters, commandType: CommandType.Text);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine(ex.ToString(), ConsoleColor.Blue);
-        //        return null;
-        //    }
-
-        //    if (relayInfo.Item4 == false)
-        //    {
-        //        return new Tuple<string, string, string, bool>(relayInfo.Item1, relayInfo.Item2, relayInfo.Item3, true);
-        //    }
-        //    else
-        //    {
-        //        return null;
-        //    }
-        //}
-        
         private static string CleanseTheData(string line)
         {
-            return Regex.Replace(line, @"Β", "F").ToUpper(); //@"[^\d\s\w,:\-.'\/\!\@\#\$\%\^\&\*\(\)]", "?");
-        }
- 
-        //internal static void FillEmptyTimes()
-        //{
-        //    string commandText = "SELECT heatId FROM Heat h WHERE h.startTime = ''";
-
-        //    List<string> heatsWithoutStartTime = App.InMemoryConnection.Query<string>(commandText).ToList();
-
-        //    foreach (var heat in heatsWithoutStartTime)
-        //    {
-        //        //Do SQL to get these
-        //        string prevEventTime, nextEventTime;
-        //        var parameter = new DynamicParameters();
-        //        parameter.Add("@heatId", heat);
-        //        commandText = "SELECT startTime FROM Heat h WHERE h.heatId = @heatId - 1;";
-        //        prevEventTime = App.InMemoryConnection.Query<string>(commandText, param: parameter).FirstOrDefault();
-        //        if (prevEventTime == null) { return; }
-
-        //        commandText = "SELECT startTime FROM Heat h WHERE h.heatId = @heatId + 1;";
-        //        nextEventTime = App.InMemoryConnection.Query<string>(commandText, param: parameter).FirstOrDefault();
-        //        if (nextEventTime == null) { return; }
-
-        //        if (prevEventTime == "" || nextEventTime == "") { continue; }
-
-        //        DateTime prevDateTime = DateTime.Parse(prevEventTime);
-        //        DateTime nextDateTime = DateTime.Parse(nextEventTime);
-
-        //        TimeSpan timeBetween = nextDateTime - prevDateTime;
-        //        TimeSpan newTime = new(0, (timeBetween.Minutes / 2), 0);
-        //        DateTime newDateTime = prevDateTime + newTime;
-
-        //        parameter.Add("@startTime", newDateTime.ToString("t"));
-        //        commandText = "UPDATE Heat ";
-        //        commandText += "SET startTime = @startTime ";
-        //        commandText += "WHERE heatId = @heatId;";
-        //        App.InMemoryConnection.Execute(commandText, param: parameter);
-        //    }
-        //}
-
+            line = Regex.Replace(line.ToUpper(), @"Β", "F"); //@"[^\d\s\w,:\-.'\/\!\@\#\$\%\^\&\*\(\)]", "?");
+            return line.Replace("BUTTERBLY", "BUTTERFLY");
+        } 
     }
 }
