@@ -17,7 +17,7 @@ public static class MauiProgram
 
         builder.Services.AddMauiBlazorWebView();
 		builder.Services.AddSingleton<MeetDataService>();
-
+		builder.Services.AddSingleton<SwimmerListService>();
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
 		builder.Logging.AddDebug();

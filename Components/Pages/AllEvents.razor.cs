@@ -1,11 +1,11 @@
 ﻿using HeatSheetHelperBlazor.Components.Shared;
+using HeatSheetHelperBlazor.Services;
 using Microsoft.AspNetCore.Components;
 
 namespace HeatSheetHelperBlazor.Components.Pages
 {
     partial class AllEvents
     {
-        public SwimMeet swimMeet { get; set; }
         List<SwimEvent> anEvents = new List<SwimEvent>();
         IQueryable<SwimEvent>? allEvents;
         IQueryable<HeatInfo>? allHeats;

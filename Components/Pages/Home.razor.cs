@@ -11,11 +11,10 @@ namespace HeatSheetHelperBlazor.Components.Pages
 {
     public partial class Home
     {
-        [Inject] public MeetDataService MeetDataService { get; set; } = new();
+        [Inject] public MeetDataService MeetDataService { get; set; }
+        [Inject] public SwimmerListService SwimmerListService { get; set; }
         private ErrorModal ErrorModal = new();
-        private List<string> swimmerNameList = new();
         private List<SwimmerHeatRow> swimmerHeats = new();
-        private SwimMeet swimMeet;
 
         public string? SelectedSwimmer { get; private set; }
 
@@ -36,13 +35,20 @@ namespace HeatSheetHelperBlazor.Components.Pages
 
                 List<string> heatSheet = new();
 
+                var swimMeet = new SwimMeet();
                 foreach (var page in document.GetPages())
                 {
                     string pdfText = ContentOrderTextExtractor.GetText(page, true);
+                    var lines = Regex.Split(pdfText, "\n").ToList();
                     heatSheet.AddRange(Regex.Split(pdfText, "\n").ToList());
+                    var eventsToAdd = SwimmerFunctions.ParseHeatSheetToEvents(lines);
+                    if (eventsToAdd != null && eventsToAdd.Count > 0)
+                    {
+                        swimMeet.SwimEvents.AddRange(eventsToAdd);
+                    }
+                    await InvokeAsync(StateHasChanged); // Update UI after each page
                 }
 
-                swimMeet = SwimmerFunctions.ParseHeatSheetToEvents(heatSheet);
                 MeetDataService.SwimMeet = swimMeet;
 
                 //SwimmerFunctions.FillEmptyTimes();
@@ -58,11 +64,11 @@ namespace HeatSheetHelperBlazor.Components.Pages
 
         private async Task PopulateSwimmerNameList()
         {
-            if (swimMeet == null) return;
+            if (MeetDataService.SwimMeet == null) return;
 
-            swimmerNameList = await Task.Run(() =>
+            SwimmerListService.SwimmerNameList = await Task.Run(() =>
             {
-                return swimMeet.SwimEvents
+                return MeetDataService.SwimMeet.SwimEvents
                 .SelectMany(ev => ev.Heats)
                 .SelectMany(heat => heat.LaneInfos)
                 .Select(lane => lane.SwimmerName)
@@ -75,12 +81,16 @@ namespace HeatSheetHelperBlazor.Components.Pages
 
         private async Task SwimmerPicker_SelectedIndexChanged(ChangeEventArgs e)
         {
-            SelectedSwimmer = e.Value?.ToString();
-
-            if (!string.IsNullOrEmpty(SelectedSwimmer))
+            var selected = e.Value?.ToString();
+            SwimmerListService.SelectedSwimmer = selected;
+            if (!string.IsNullOrEmpty(selected))
             {
-                // Fetch heats for the selected swimmer
-                await LoadSwimmerHeats(SelectedSwimmer);
+                await LoadSwimmerHeats(selected);
+            }
+            else
+            {
+                swimmerHeats.Clear();
+                StateHasChanged();
             }
         }
 
@@ -90,10 +100,10 @@ namespace HeatSheetHelperBlazor.Components.Pages
             {
                 swimmerHeats = await Task.Run(() =>
                 {
-                    if (swimMeet == null || swimMeet.SwimEvents == null)
+                    if (MeetDataService.SwimMeet == null || MeetDataService.SwimMeet.SwimEvents == null)
                         return new List<SwimmerHeatRow>();
 
-                    return swimMeet.SwimEvents
+                    return MeetDataService.SwimMeet.SwimEvents
                         .SelectMany(ev => (ev.Heats ?? new List<HeatInfo>())
                             .SelectMany(heat => (heat.LaneInfos ?? Enumerable.Empty<LaneInfo>())
                                 .Select(lane => new { ev, heat, lane })))
@@ -104,7 +114,8 @@ namespace HeatSheetHelperBlazor.Components.Pages
                             HeatNumber = x.heat.HeatNumber,
                             LaneNumber = x.lane.LaneNumber,
                             EventName = x.ev.EventDetails,
-                            StartTime = x.heat.StartTime
+                            StartTime = x.heat.StartTime,
+                            SeedTime = x.lane.SeedTime
                         })
                         .OrderBy(x => x.EventNumber)
                         .ThenBy(x => x.HeatNumber)
@@ -117,6 +128,21 @@ namespace HeatSheetHelperBlazor.Components.Pages
             catch (Exception ex)
             {
                 ErrorModal.Show("Error", "An error was encountered when loading the swimmer heats: " + ex.Message);
+            }
+        }
+
+        protected override async Task OnInitializedAsync()
+        {
+            if (!string.IsNullOrEmpty(SwimmerListService.SelectedSwimmer))
+            {
+                await LoadSwimmerHeats(SwimmerListService.SelectedSwimmer);
+            }
+        }
+        protected override async Task OnParametersSetAsync()
+        {
+            if (!string.IsNullOrEmpty(SwimmerListService.SelectedSwimmer))
+            {
+                await LoadSwimmerHeats(SwimmerListService.SelectedSwimmer);
             }
         }
     }

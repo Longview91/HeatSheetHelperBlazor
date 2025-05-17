@@ -9,7 +9,7 @@ namespace HeatSheetHelper.Helpers
 {
     internal class SwimmerFunctions
     {
-        internal static SwimMeet ParseHeatSheetToEvents(List<string> heatSheet)
+        internal static List<SwimEvent> ParseHeatSheetToEvents(List<string> heatSheet)
         {
             SwimMeet swimMeet = new();
             var events = new List<SwimEvent>();
@@ -173,8 +173,9 @@ namespace HeatSheetHelper.Helpers
             if (currentEvent != null)
                 events.Add(currentEvent);
 
-            swimMeet.SwimEvents = events;
-            return swimMeet;
+            return events;
+            //swimMeet.SwimEvents = events;
+            //return swimMeet;
         }
 
 
@@ -195,10 +196,7 @@ namespace HeatSheetHelper.Helpers
             var infoToReturn = new Tuple<string, string, string, bool>(seedTime, teamName, laneNumber, false);
             return infoToReturn;
         }
-        internal static void ParseRelaySwimmers(
-    string line,
-    HeatInfo currentHeat,
-    string relayPattern)
+        internal static void ParseRelaySwimmers(string line, HeatInfo currentHeat, string relayPattern)
         {
             if (currentHeat == null) return;
 

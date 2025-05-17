@@ -2,7 +2,7 @@
 @using HeatSheetHelperBlazor.Models
 @using HeatSheetHelper.Helpers
 
-<PageTitle>Main Page</PageTitle>
+<PageTitle>Heat Sheet Helper</PageTitle>
 
 <h3>Heat Sheet Helper</h3>
 
@@ -12,19 +12,26 @@
         Choose a Heat Sheet
     </button>
 
-    @if (swimMeet != null)
+    @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
     {
+        <!-- TextBox -->
+        <input type="text"
+               placeholder="Type to filter swimmers..."
+               @bind="SwimmerListService.SwimmerFilter"
+               @bind:event="oninput"
+               style="margin-bottom: 8px; width: 100%; max-width: 300px;" />
+
         <!-- Picker -->
-        <select @onchange="SwimmerPicker_SelectedIndexChanged">
+        <select @onchange="SwimmerPicker_SelectedIndexChanged" value="@SwimmerListService.SelectedSwimmer">
             <option value="">Select a swimmer</option>
-            @foreach (var swimmer in swimmerNameList)
+            @foreach (var swimmer in SwimmerListService.FilteredSwimmerNames)
             {
                 <option value="@swimmer">@swimmer</option>
             }
         </select>
     }
 
-    @if (swimMeet != null)
+    @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
     {
         <div class="heats-grid">
             <h4>Heats for @SelectedSwimmer</h4>
@@ -36,6 +43,7 @@
                         <th>L</th>
                         <th>Event Name</th>
                             <th width="95">Start Time</th>
+                            <th>Seed Time</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -47,6 +55,7 @@
                             <td>@heat.LaneNumber</td>
                             <td>@heat.EventName</td>
                             <td>@heat.StartTime</td>
+                            <td>@heat.SeedTime</td>
                         </tr>
                     }
                 </tbody>
