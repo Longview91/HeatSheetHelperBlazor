@@ -35,20 +35,13 @@ namespace HeatSheetHelperBlazor.Components.Pages
 
                 List<string> heatSheet = new();
 
-                var swimMeet = new SwimMeet();
                 foreach (var page in document.GetPages())
                 {
                     string pdfText = ContentOrderTextExtractor.GetText(page, true);
-                    var lines = Regex.Split(pdfText, "\n").ToList();
                     heatSheet.AddRange(Regex.Split(pdfText, "\n").ToList());
-                    var eventsToAdd = SwimmerFunctions.ParseHeatSheetToEvents(lines);
-                    if (eventsToAdd != null && eventsToAdd.Count > 0)
-                    {
-                        swimMeet.SwimEvents.AddRange(eventsToAdd);
-                    }
-                    await InvokeAsync(StateHasChanged); // Update UI after each page
                 }
 
+                var swimMeet = SwimmerFunctions.ParseHeatSheetToEvents(heatSheet);
                 MeetDataService.SwimMeet = swimMeet;
 
                 //SwimmerFunctions.FillEmptyTimes();
@@ -79,71 +72,116 @@ namespace HeatSheetHelperBlazor.Components.Pages
             });
         }
 
-        private async Task SwimmerPicker_SelectedIndexChanged(ChangeEventArgs e)
+        //private async Task SwimmerPicker_SelectedIndexChanged(ChangeEventArgs e)
+        //{
+        //    var selected = e.Value?.ToString();
+        //    SwimmerListService.SelectedSwimmer = selected;
+        //    if (!string.IsNullOrEmpty(selected))
+        //    {
+        //        await LoadSwimmerHeats(selected);
+        //    }
+        //    else
+        //    {
+        //        swimmerHeats.Clear();
+        //        StateHasChanged();
+        //    }
+        //}
+        private async Task ToggleSwimmer(string swimmer)
         {
-            var selected = e.Value?.ToString();
-            SwimmerListService.SelectedSwimmer = selected;
-            if (!string.IsNullOrEmpty(selected))
-            {
-                await LoadSwimmerHeats(selected);
-            }
+            if (SwimmerListService.SelectedSwimmers.Contains(swimmer))
+                SwimmerListService.SelectedSwimmers.Remove(swimmer);
             else
+                SwimmerListService.SelectedSwimmers.Add(swimmer);
+
+            await LoadSwimmerHeatsForSelected();
+            StateHasChanged();
+        }
+
+        private async Task LoadSwimmerHeatsForSelected()
+        {
+            var selected = SwimmerListService.SelectedSwimmers;
+            if (selected.Count == 0)
             {
                 swimmerHeats.Clear();
-                StateHasChanged();
+                return;
             }
-        }
 
-        private async Task LoadSwimmerHeats(string swimmerName)
-        {
-            try
+            swimmerHeats = await Task.Run(() =>
             {
-                swimmerHeats = await Task.Run(() =>
-                {
-                    if (MeetDataService.SwimMeet == null || MeetDataService.SwimMeet.SwimEvents == null)
-                        return new List<SwimmerHeatRow>();
+                if (MeetDataService.SwimMeet == null || MeetDataService.SwimMeet.SwimEvents == null)
+                    return new List<SwimmerHeatRow>();
 
-                    return MeetDataService.SwimMeet.SwimEvents
-                        .SelectMany(ev => (ev.Heats ?? new List<HeatInfo>())
-                            .SelectMany(heat => (heat.LaneInfos ?? Enumerable.Empty<LaneInfo>())
-                                .Select(lane => new { ev, heat, lane })))
-                        .Where(x => string.Equals(x.lane.SwimmerName, swimmerName, StringComparison.OrdinalIgnoreCase))
-                        .Select(x => new SwimmerHeatRow
-                        {
-                            EventNumber = x.ev.EventNumber,
-                            HeatNumber = x.heat.HeatNumber,
-                            LaneNumber = x.lane.LaneNumber,
-                            EventName = x.ev.EventDetails,
-                            StartTime = x.heat.StartTime,
-                            SeedTime = x.lane.SeedTime
-                        })
-                        .OrderBy(x => x.EventNumber)
-                        .ThenBy(x => x.HeatNumber)
-                        .ThenBy(x => x.LaneNumber)
-                        .ToList();
-                });
-
-                StateHasChanged();
-            }
-            catch (Exception ex)
-            {
-                ErrorModal.Show("Error", "An error was encountered when loading the swimmer heats: " + ex.Message);
-            }
+                return MeetDataService.SwimMeet.SwimEvents
+                    .SelectMany(ev => (ev.Heats ?? new List<HeatInfo>())
+                        .SelectMany(heat => (heat.LaneInfos ?? Enumerable.Empty<LaneInfo>())
+                            .Select(lane => new { ev, heat, lane })))
+                    .Where(x => selected.Contains(x.lane.SwimmerName))
+                    .Select(x => new SwimmerHeatRow
+                    {
+                        EventNumber = x.ev.EventNumber,
+                        HeatNumber = x.heat.HeatNumber,
+                        LaneNumber = x.lane.LaneNumber,
+                        SwimmerName = x.lane.SwimmerName,
+                        EventName = x.ev.EventDetails,
+                        StartTime = x.heat.StartTime,
+                        SeedTime = x.lane.SeedTime
+                    })
+                    .OrderBy(x => x.EventNumber)
+                    .ThenBy(x => x.HeatNumber)
+                    .ThenBy(x => x.LaneNumber)
+                    .ToList();
+            });
         }
+        //private async Task LoadSwimmerHeats(string swimmerName)
+        //{
+        //    try
+        //    {
+        //        swimmerHeats = await Task.Run(() =>
+        //        {
+        //            if (MeetDataService.SwimMeet == null || MeetDataService.SwimMeet.SwimEvents == null)
+        //                return new List<SwimmerHeatRow>();
+
+        //            return MeetDataService.SwimMeet.SwimEvents
+        //                .SelectMany(ev => (ev.Heats ?? new List<HeatInfo>())
+        //                    .SelectMany(heat => (heat.LaneInfos ?? Enumerable.Empty<LaneInfo>())
+        //                        .Select(lane => new { ev, heat, lane })))
+        //                .Where(x => string.Equals(x.lane.SwimmerName, swimmerName, StringComparison.OrdinalIgnoreCase))
+        //                .Select(x => new SwimmerHeatRow
+        //                {
+        //                    EventNumber = x.ev.EventNumber,
+        //                    HeatNumber = x.heat.HeatNumber,
+        //                    LaneNumber = x.lane.LaneNumber,
+        //                    EventName = x.ev.EventDetails,
+        //                    StartTime = x.heat.StartTime,
+        //                    SeedTime = x.lane.SeedTime
+        //                })
+        //                .OrderBy(x => x.EventNumber)
+        //                .ThenBy(x => x.HeatNumber)
+        //                .ThenBy(x => x.LaneNumber)
+        //                .ToList();
+        //        });
+
+        //        StateHasChanged();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        ErrorModal.Show("Error", "An error was encountered when loading the swimmer heats: " + ex.Message);
+        //    }
+        //}
 
         protected override async Task OnInitializedAsync()
         {
-            if (!string.IsNullOrEmpty(SwimmerListService.SelectedSwimmer))
+            if (SwimmerListService.SelectedSwimmers != null && SwimmerListService.SelectedSwimmers.Count > 0)
             {
-                await LoadSwimmerHeats(SwimmerListService.SelectedSwimmer);
+                await LoadSwimmerHeatsForSelected();
             }
         }
-        protected override async Task OnParametersSetAsync()
-        {
-            if (!string.IsNullOrEmpty(SwimmerListService.SelectedSwimmer))
-            {
-                await LoadSwimmerHeats(SwimmerListService.SelectedSwimmer);
-            }
-        }
+        //protected override async Task OnParametersSetAsync()
+        //{
+        //    if (!string.IsNullOrEmpty(SwimmerListService.SelectedSwimmer))
+        //    {
+        //        await LoadSwimmerHeats(SwimmerListService.SelectedSwimmer);
+        //    }
+        //}
     }
 }

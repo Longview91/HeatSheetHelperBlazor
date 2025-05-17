@@ -11,8 +11,9 @@ namespace HeatSheetHelperBlazor.Models
         public int EventNumber { get; set; }
         public int HeatNumber { get; set; }
         public int LaneNumber { get; set; }
-        public string EventName { get; set; }
-        public string StartTime { get; set; }
-        public string SeedTime { get; set; }
+        public string? SwimmerName { get; set; }
+        public string? EventName { get; set; }
+        public string? StartTime { get; set; }
+        public string? SeedTime { get; set; }
     }
 }

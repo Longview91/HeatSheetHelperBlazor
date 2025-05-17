@@ -21,29 +21,34 @@
                @bind:event="oninput"
                style="margin-bottom: 8px; width: 100%; max-width: 300px;" />
 
-        <!-- Picker -->
-        <select @onchange="SwimmerPicker_SelectedIndexChanged" value="@SwimmerListService.SelectedSwimmer">
-            <option value="">Select a swimmer</option>
+        <!-- Multi-select checkboxes -->
+        <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 4px; margin-bottom: 8px;">
             @foreach (var swimmer in SwimmerListService.FilteredSwimmerNames)
             {
-                <option value="@swimmer">@swimmer</option>
+                <label style="display: block;">
+                    <input type="checkbox"
+                           checked="@SwimmerListService.SelectedSwimmers.Contains(swimmer)"
+                           @onchange="() => ToggleSwimmer(swimmer)" />
+                    @swimmer
+                </label>
             }
-        </select>
+        </div>
     }
 
     @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
     {
         <div class="heats-grid">
-            <h4>Heats for @SelectedSwimmer</h4>
+            <h4>Heats for @string.Join(", ", SwimmerListService.SelectedSwimmers)</h4>
             <table>
                 <thead>
                     <tr>
                         <th>E</th>
                         <th>H</th>
                         <th>L</th>
+                        <th>Swimmer Name</th>
                         <th>Event Name</th>
-                            <th width="95">Start Time</th>
-                            <th>Seed Time</th>
+                        <th width="95">Start Time</th>
+                        <th>Seed Time</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -53,6 +58,7 @@
                             <td>@heat.EventNumber</td>
                             <td>@(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())</td>
                             <td>@heat.LaneNumber</td>
+                            <td>@heat.SwimmerName</td>
                             <td>@heat.EventName</td>
                             <td>@heat.StartTime</td>
                             <td>@heat.SeedTime</td>

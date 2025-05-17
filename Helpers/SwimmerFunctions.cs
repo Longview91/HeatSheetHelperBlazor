@@ -9,7 +9,7 @@ namespace HeatSheetHelper.Helpers
 {
     internal class SwimmerFunctions
     {
-        internal static List<SwimEvent> ParseHeatSheetToEvents(List<string> heatSheet)
+        internal static SwimMeet ParseHeatSheetToEvents(List<string> heatSheet)
         {
             SwimMeet swimMeet = new();
             var events = new List<SwimEvent>();
@@ -173,11 +173,9 @@ namespace HeatSheetHelper.Helpers
             if (currentEvent != null)
                 events.Add(currentEvent);
 
-            return events;
-            //swimMeet.SwimEvents = events;
-            //return swimMeet;
+            swimMeet.SwimEvents = events;
+            return swimMeet;
         }
-
 
         private static string SwapLastCommaFirstToFirstLast(string name)
         {

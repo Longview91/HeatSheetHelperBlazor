@@ -10,12 +10,16 @@ namespace HeatSheetHelperBlazor.Services
     public class SwimmerListService
     {
         public List<string> SwimmerNameList { get; set; } = new();
-        public string? SelectedSwimmer { get; set; }
         public string? SwimmerFilter { get; set; } = string.Empty;
-        public List<string> FilteredSwimmerNames => string.IsNullOrWhiteSpace(SwimmerFilter)
-            ? SwimmerNameList
-            : SwimmerNameList.Where(name => name.Contains(SwimmerFilter, StringComparison.OrdinalIgnoreCase)).ToList();
-
+        public HashSet<string> SelectedSwimmers { get; set; } = new();
+        public List<string> FilteredSwimmerNames =>
+            SwimmerNameList
+                .Where(name =>
+                    (string.IsNullOrWhiteSpace(SwimmerFilter) || name.Contains(SwimmerFilter, StringComparison.OrdinalIgnoreCase))
+                    || SelectedSwimmers.Contains(name))
+                .Distinct()
+                .OrderBy(name => name)
+                .ToList();
         public SwimmerListService()
         {
             SwimmerNameList = new();
