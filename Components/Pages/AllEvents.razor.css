@@ -37,3 +37,14 @@
     font-size: 1.0em;
     color: white;
 }
+
+.event-selection-dropdown {
+    position: fixed;
+    z-index: 1000; /* Ensure it stays above other content */
+    background-color: white; /* Optional: Add a background to prevent content from showing through */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for better visibility */
+}
+
+.all-events-content {
+    padding-top: 60px; /* Adjust this value to match the height of the dropdown */
+}

@@ -41,9 +41,8 @@
                         <th>E</th>
                         <th>H</th>
                         <th>L</th>
-                        <th>Event &amp; Swimmer Name</th>
-                        <th>Start Time</th>
-                        <th>Seed Time</th>
+                        <th>Event@("\n")Swimmer Name</th>
+                        <th>Start Time@("\n")Seed Time</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -53,9 +52,8 @@
                             <td>@heat.EventNumber</td>
                             <td>@(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())</td>
                             <td>@heat.LaneNumber</td>
-                            <td>@(heat.EventName+"\n")<strong>@heat.SwimmerName</strong></td>
-                            <td>@heat.StartTime</td>
-                            <td>@heat.SeedTime</td>
+                            <td>@heat.EventName@("\n")<strong>@heat.SwimmerName</strong></td>
+                            <td>@heat.StartTime@("\n")<strong>@heat.SeedTime</strong></td>
                         </tr>
                     }
                 </tbody>

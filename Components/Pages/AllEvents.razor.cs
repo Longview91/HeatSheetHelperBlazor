@@ -1,89 +1,56 @@
 ﻿using HeatSheetHelperBlazor.Components.Shared;
 using HeatSheetHelperBlazor.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace HeatSheetHelperBlazor.Components.Pages
 {
     partial class AllEvents
     {
-        List<SwimEvent> anEvents = new List<SwimEvent>();
-        IQueryable<SwimEvent>? allEvents;
-        IQueryable<HeatInfo>? allHeats;
-        IQueryable<LaneInfo>? allLaneInfos;
+        private int? selectedEventNumber;
+        private int? selectedHeatNumber;
+        private List<int> eventNumbers = new();
+        private List<int> heatNumbers = new();
 
-        protected override async Task OnInitializedAsync()
+        protected override void OnParametersSet()
         {
-            // Simulate asynchronous loading to demonstrate a loading indicator
-            await Task.Delay(500);
-            anEvents = new List<SwimEvent>
+            if (MeetDataService.SwimMeet?.SwimEvents != null)
             {
-                new SwimEvent
-                {
-                    EventNumber = 1,
-                    EventDetails = "Boys 50m Freestyle",
-                    Heats = new List<HeatInfo>
-                    {
-                        new HeatInfo
-                        {
-                            HeatNumber = 1,
-                            StartTime = "10:00 AM",
-                            LaneInfos = new List<LaneInfo>
-                            {
-                                new LaneInfo { LaneNumber = 1, SwimmerName = "John Doe", SeedTime = "26.50", SwimmerAge = 12 },
-                                new LaneInfo { LaneNumber = 2, SwimmerName = "Jane Smith", SeedTime = "26.00", SwimmerAge = 14 }
-                            }.AsQueryable()
-                        },
-                        new HeatInfo
-                        {
-                            HeatNumber = 2,
-                            StartTime = "10:05 AM",
-                            LaneInfos = new List<LaneInfo>
-                            {
-                                new LaneInfo { LaneNumber = 1, SwimmerName = "Jim Doe", SeedTime = "25.50", SwimmerAge = 12 },
-                                new LaneInfo { LaneNumber = 2, SwimmerName = "Jean Smith", SeedTime = "25.00", SwimmerAge = 14 }
-                            }.AsQueryable()
-
-                        }
-                    }
-                },
-                new SwimEvent
-                {
-                    EventNumber = 2,
-                    EventDetails = "100m Butterfly",
-                    Heats = new List<HeatInfo>
-                    {
-                        new HeatInfo
-                        {
-                            HeatNumber = 2,
-                            StartTime = "10:30 AM",
-                            LaneInfos = new List<LaneInfo>
-                            {
-                                new LaneInfo { LaneNumber = 1, SwimmerName = "John Doe", SeedTime = "1:00.00", SwimmerAge = 12 },
-                                new LaneInfo { LaneNumber = 2, SwimmerName = "Jane Smith", SeedTime = "1:05.00", SwimmerAge = 14 }
-                            }.AsQueryable()
-                        }
-                    }
-                },
-                new SwimEvent
-                {
-                    EventNumber = 3,
-                    EventDetails = "200m Backstroke",
-                    Heats = new List<HeatInfo>
-                    {
-                        new HeatInfo
-                        {
-                            HeatNumber = 3,
-                            StartTime = "11:00 AM",
-                            LaneInfos = new List<LaneInfo>
-                            {
-                                new LaneInfo { LaneNumber = 1, SwimmerName = "John Doe", SeedTime = "2:00.00", SwimmerAge = 12 },
-                                new LaneInfo { LaneNumber = 2, SwimmerName = "Jane Smith", SeedTime = "2:05.00", SwimmerAge = 14 }
-                            }.AsQueryable()
-                        }
-                    }
-                }
-            };
-            allEvents = anEvents.AsQueryable();
+                eventNumbers = MeetDataService.SwimMeet.SwimEvents
+                    .Select(e => e.EventNumber)
+                    .Distinct()
+                    .OrderBy(n => n)
+                    .ToList();
+            }
         }
+
+        private void OnEventNumberChanged(ChangeEventArgs e)
+        {
+            if (int.TryParse(e.Value?.ToString(), out var evtNum))
+            {
+                selectedEventNumber = evtNum;
+                var evt = MeetDataService.SwimMeet.SwimEvents.FirstOrDefault(ev => ev.EventNumber == evtNum);
+                heatNumbers = evt?.Heats.Select(h => h.HeatNumber).Distinct().OrderBy(n => n).ToList() ?? new List<int>();
+                selectedHeatNumber = heatNumbers.FirstOrDefault();
+                ScrollToTable(evtNum, selectedHeatNumber ?? 1);
+            }
+        }
+
+        private void OnHeatNumberChanged(ChangeEventArgs e)
+        {
+            if (int.TryParse(e.Value?.ToString(), out var heatNum))
+            {
+                selectedHeatNumber = heatNum;
+                if (selectedEventNumber.HasValue)
+                    ScrollToTable(selectedEventNumber.Value, heatNum);
+            }
+        }
+
+        private async void ScrollToTable(int eventNumber, int heatNumber)
+        {
+            await JS.InvokeVoidAsync("scrollToEventHeat", eventNumber, heatNumber);
+        }
+
+        [Inject] private IJSRuntime JS { get; set; }
     }
 }

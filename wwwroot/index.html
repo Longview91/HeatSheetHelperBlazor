@@ -25,6 +25,66 @@
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
 
+    <script>
+        window.scrollToEventHeat = function (eventNumber, heatNumber) {
+            var el = document.getElementById(`event-${eventNumber}-heat-${heatNumber}`);
+            if (el) {
+                var stickyOffset = document.querySelector('.event-selection-dropdown')?.offsetHeight || 0;
+                stickyOffset += document.querySelector('.nav-menu')?.offsetHeight || 0; // Add nav menu height if present
+                var elementPosition = el.getBoundingClientRect().top + window.pageYOffset;
+                var offsetPosition = elementPosition - stickyOffset - 20; // Add a small margin (10px)
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        }
+    </script>
+
+    <script>
+        let lastScrollTop = 0;
+        let ticking = false;
+
+        window.registerNavMenuScroll = function (dotNetHelper) {
+            window.addEventListener('scroll', function () {
+                if (!ticking) {
+                    window.requestAnimationFrame(function () {
+                        let st = window.pageYOffset || document.documentElement.scrollTop;
+                        if (st > lastScrollTop + 10) {
+                            console.log("Scrolling down"); // Add this line
+                            // Scrolling down
+                            dotNetHelper.invokeMethodAsync('HideNavMenu');
+                        } else if (st < lastScrollTop - 10) {
+                            console.log("Scrolling up"); // Add this line
+                            // Scrolling up
+                            dotNetHelper.invokeMethodAsync('ShowNavMenu');
+                        }
+                        lastScrollTop = st <= 0 ? 0 : st;
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            });
+        }
+    </script>
+
+    <script>
+        function adjustDropdownPosition() {
+            const navMenu = document.querySelector('.nav-menu');
+            const dropdown = document.querySelector('.event-selection-dropdown');
+            if (navMenu && dropdown) {
+                const navHeight = navMenu.offsetHeight;
+                dropdown.style.top = `${navHeight}px`;
+            }
+        }
+
+        // Adjust on page load and window resize
+        window.addEventListener('load', adjustDropdownPosition);
+        window.addEventListener('resize', adjustDropdownPosition);
+        window.addEventListener('contextmenu'), adjustDropdownPosition);
+    </script>
+
 </body>
 
 </html>

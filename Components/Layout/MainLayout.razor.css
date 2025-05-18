@@ -90,3 +90,13 @@ nav, .nav-menu {
         padding-right: 1.5rem !important;
     }
 }
+
+.hide-nav {
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+}
+
+.show-nav {
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+}
