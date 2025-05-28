@@ -11,6 +11,35 @@ namespace HeatSheetHelperBlazor.Components.Pages
         private int? selectedHeatNumber;
         private List<int> eventNumbers = new();
         private List<int> heatNumbers = new();
+        private List<string> teamNames = new();
+        private string selectedTeamName = "";
+
+        protected override void OnInitialized()
+        {
+            base.OnInitialized();
+            LoadTeamNames();
+        }
+
+        private void LoadTeamNames()
+        {
+            if (MeetDataService.SwimMeet?.SwimEvents == null)
+                return;
+
+            teamNames = MeetDataService.SwimMeet.SwimEvents
+                .SelectMany(ev => ev.Heats)
+                .SelectMany(h => h.LaneInfos)
+                .Select(l => l.TeamName)
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Distinct()
+                .OrderBy(t => t)
+                .ToList();
+        }
+
+        private void OnTeamNameChanged(ChangeEventArgs e)
+        {
+            selectedTeamName = e.Value?.ToString() ?? "";
+            StateHasChanged();
+        }
 
         protected override void OnParametersSet()
         {

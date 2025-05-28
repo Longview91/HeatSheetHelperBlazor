@@ -3,9 +3,9 @@
 @using HeatSheetHelperBlazor.Services
 @inject MeetDataService MeetDataService
 
+<div class="event-selection-dropdown" style="display: flex; gap: 1em; margin-bottom: 1em;">
 @if (eventNumbers.Count > 0)
 {
-        <div class="event-selection-dropdown" style="display: flex; gap: 1em; margin-bottom: 1em;">
             <select @onchange="OnEventNumberChanged" value="@selectedEventNumber">
                 <option value="">Select Event</option>
             @foreach (var num in eventNumbers)
@@ -20,44 +20,62 @@
                         <option value="@num">@num</option>
             }
             </select>
-        </div>
 }
+@if (teamNames.Count > 0)
+{
+    <select @onchange="OnTeamNameChanged" value="@selectedTeamName" style="margin-right: 1em;">
+        <option value="">All Teams</option>
+        @foreach (var team in teamNames)
+        {
+            <option value="@team">@team</option>
+        }
+    </select>
+}
+</div>
 
 @if (MeetDataService.SwimMeet?.SwimEvents != null)
 {
     <div class="all-events-content" style="flex;">
         @foreach (var swimEvent in MeetDataService.SwimMeet.SwimEvents)
         {
-            @foreach (var heat in swimEvent.Heats)
+            foreach (var heat in swimEvent.Heats)
             {
-                <table class="table all-events-table" id="event-@swimEvent.EventNumber-heat-@heat.HeatNumber">
-                    <thead>
-                        <tr>
-                            <th colspan="5" class="event-header">
-                                Event @swimEvent.EventNumber: @swimEvent.EventDetails
-                                | Heat @(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())
-                                | at @heat.StartTime
-                            </th>
-                        </tr>
-                        <tr>
-                            <th>Lane</th>
-                            <th><div>Swimmer</div><div>Team</div></th>
-                            <th>Age</th>
-                            <th>Seed Time</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var lane in heat.LaneInfos)
-                        {
+                // Only show heats with at least one lane matching the selected team (or all if none selected)
+                var filteredLanes = string.IsNullOrEmpty(selectedTeamName)
+                ? heat.LaneInfos
+                : heat.LaneInfos.Where(l => l.TeamName == selectedTeamName);
+
+                if (filteredLanes.Any())
+                {
+                    <table class="table all-events-table" id="event-@swimEvent.EventNumber-heat-@heat.HeatNumber">
+                        <thead>
                             <tr>
-                                <td>@(lane.LaneNumber == 0 ? "" : lane.LaneNumber.ToString())</td>
-                                <td><div><strong>@lane.SwimmerName</strong></div><div>@lane.TeamName @lane.RelayTeamLetter</div></td>
-                                <td>@(lane.SwimmerAge == 0 ? "" : lane.SwimmerAge.ToString())</td>
-                                <td>@lane.SeedTime</td>
+                                <th colspan="5" class="event-header">
+                                    Event @swimEvent.EventNumber: @swimEvent.EventDetails
+                                    | Heat @(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())
+                                    | at @heat.StartTime
+                                </th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                            <tr>
+                                <th>Lane</th>
+                                <th><div>Swimmer</div><div>Team</div></th>
+                                <th>Age</th>
+                                <th>Seed Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var lane in filteredLanes)
+                            {
+                                <tr>
+                                    <td>@(lane.LaneNumber == 0 ? "" : lane.LaneNumber.ToString())</td>
+                                    <td><div><strong>@lane.SwimmerName</strong></div><div>@lane.TeamName @lane.RelayTeamLetter</div></td>
+                                    <td>@(lane.SwimmerAge == 0 ? "" : lane.SwimmerAge.ToString())</td>
+                                    <td>@lane.SeedTime</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
             }
         }
     </div>
