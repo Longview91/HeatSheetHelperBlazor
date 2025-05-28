@@ -1,0 +1,55 @@
+﻿@page "/singleheat/{EventNumber:int}/{HeatNumber:int}"
+@using HeatSheetHelperBlazor.Components.Shared
+@using HeatSheetHelperBlazor.Services
+@inject MeetDataService MeetDataService
+
+<h3>Single Heat Details - Event: @EventNumber Heat: @HeatNumber</h3>
+
+@if (heatInfo != null)
+{
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Lane</th>
+                    <th>Swimmer</th>
+                    <th>Team</th>
+                    <th>Age</th>
+                    <th>Seed Time</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var lane in heatInfo.LaneInfos)
+            {
+                        <tr>
+                            <td>@lane.LaneNumber</td>
+                            <td>@lane.SwimmerName</td>
+                            <td>@lane.TeamName @lane.RelayTeamLetter</td>
+                            <td>@lane.SwimmerAge</td>
+                            <td>@lane.SeedTime</td>
+                        </tr>
+            }
+            </tbody>
+        </table>
+}
+else
+{
+        <p>No heat selected.</p>
+}
+
+
+@code {
+    [Parameter] public int EventNumber { get; set; }
+    [Parameter] public int HeatNumber { get; set; }
+
+    private HeatInfo? heatInfo;
+
+    protected override void OnParametersSet()
+    {
+        var swimMeet = MeetDataService.SwimMeet;
+        if (swimMeet?.SwimEvents != null)
+        {
+            var evt = swimMeet.SwimEvents.FirstOrDefault(e => e.EventNumber == EventNumber);
+            heatInfo = evt?.Heats.FirstOrDefault(h => h.HeatNumber == HeatNumber);
+        }
+    }
+}

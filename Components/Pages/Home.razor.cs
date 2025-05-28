@@ -17,6 +17,12 @@ namespace HeatSheetHelperBlazor.Components.Pages
         private List<SwimmerHeatRow> swimmerHeats = new();
 
         public string? SelectedSwimmer { get; private set; }
+        [Inject] private NavigationManager Navigation { get; set; }
+
+        private void OpenSingleHeat(int eventNumber, int heatNumber)
+        {
+            Navigation.NavigateTo($"/singleheat/{eventNumber}/{heatNumber}");
+        }
 
         private async Task OnPDFPickClicked()
         {

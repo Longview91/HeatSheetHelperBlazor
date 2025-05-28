@@ -48,7 +48,7 @@
                 <tbody>
                     @foreach (var heat in swimmerHeats)
                     {
-                        <tr>
+                        <tr @onclick="() => OpenSingleHeat(heat.EventNumber, heat.HeatNumber)">
                             <td>@heat.EventNumber</td>
                             <td>@(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())</td>
                             <td>@heat.LaneNumber</td>

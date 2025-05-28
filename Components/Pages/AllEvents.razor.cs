@@ -13,6 +13,12 @@ namespace HeatSheetHelperBlazor.Components.Pages
         private List<int> heatNumbers = new();
         private List<string> teamNames = new();
         private string selectedTeamName = "";
+        [Inject] private NavigationManager Navigation { get; set; }
+
+        private void OpenSingleHeat(int eventNumber, int heatNumber)
+        {
+            Navigation.NavigateTo($"/singleheat/{eventNumber}/{heatNumber}");
+        }
 
         protected override void OnInitialized()
         {
