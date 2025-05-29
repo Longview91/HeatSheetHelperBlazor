@@ -1,5 +1,4 @@
 ﻿using HeatSheetHelper.Helpers;
-using Microsoft.Data.Sqlite;
 
 namespace HeatSheetHelperBlazor
 {
@@ -9,8 +8,6 @@ namespace HeatSheetHelperBlazor
         {
             try
             {
-                SQLitePCL.Batteries.Init();
-
                 InitializeComponent();
 
                 MainPage = new MainPage();
