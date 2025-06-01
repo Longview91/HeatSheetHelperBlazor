@@ -5,9 +5,6 @@
 <PageTitle>Heat Sheet Helper</PageTitle>
 
 <h3>Heat Sheet Helper</h3>
-
-<div class="grid" style="display: grid; padding: 3px;">
-
     @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
     {
         <!-- TextBox -->
@@ -34,7 +31,6 @@
     @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
     {
         <div class="heats-grid">
-            <h4>Heats for @string.Join(", ", SwimmerListService.SelectedSwimmers)</h4>
             <table>
                 <thead>
                     <tr>
@@ -64,7 +60,6 @@
     {
         <div></div>
     }
-</div>
 
 <div style="display: flex; justify-content: center; align-items: center; margin-top: 24px; margin-bottom: 24px;">
     <button class="button-style" @onclick="OnPDFPickClicked" style="max-width: 170px;">

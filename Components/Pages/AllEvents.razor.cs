@@ -20,7 +20,36 @@ namespace HeatSheetHelperBlazor.Components.Pages
 
         private Task SaveScrollPositionAsync() => StateClass.SaveAsync(JS, "allEventsScrollY");
         private Task RestoreScrollPositionAsync() => StateClass.RestoreAsync(JS, "allEventsScrollY");
+        private async Task SaveSelectionStateAsync()
+        {
+            var state = new
+            {
+                selectedEventNumber,
+                selectedHeatNumber,
+                selectedTeamName
+            };
+            await JS.InvokeVoidAsync("allEventsState.save", state);
+        }
 
+        private async Task RestoreSelectionStateAsync()
+        {
+            var state = await JS.InvokeAsync<SelectionState>("allEventsState.load");
+            if (state != null)
+            {
+                selectedEventNumber = state.selectedEventNumber;
+                selectedHeatNumber = state.selectedHeatNumber;
+                selectedTeamName = state.selectedTeamName ?? "";
+
+                // Update heatNumbers if event is selected
+                if (selectedEventNumber.HasValue && MeetDataService.SwimMeet?.SwimEvents != null)
+                {
+                    var evt = MeetDataService.SwimMeet.SwimEvents
+                        .FirstOrDefault(ev => ev.EventNumber == selectedEventNumber.Value);
+                    heatNumbers = evt?.Heats.Select(h => h.HeatNumber).Distinct().OrderBy(n => n).ToList() ?? new List<int>();
+                }
+                StateHasChanged();
+            }
+        }
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender) // && !_restoredScroll)
@@ -39,7 +68,10 @@ namespace HeatSheetHelperBlazor.Components.Pages
             base.OnInitialized();
             LoadTeamNames();
         }
-
+        protected override async Task OnInitializedAsync()
+        {
+            await RestoreSelectionStateAsync();
+        }
         private void LoadTeamNames()
         {
             if (MeetDataService.SwimMeet?.SwimEvents == null)
@@ -59,6 +91,7 @@ namespace HeatSheetHelperBlazor.Components.Pages
         {
             selectedTeamName = e.Value?.ToString() ?? "";
             StateHasChanged();
+            _ = SaveSelectionStateAsync();
         }
 
         protected override void OnParametersSet()
@@ -82,6 +115,7 @@ namespace HeatSheetHelperBlazor.Components.Pages
                 heatNumbers = evt?.Heats.Select(h => h.HeatNumber).Distinct().OrderBy(n => n).ToList() ?? new List<int>();
                 selectedHeatNumber = heatNumbers.FirstOrDefault();
                 ScrollToTable(evtNum, selectedHeatNumber ?? 1);
+                _ = SaveSelectionStateAsync();
             }
         }
 
@@ -92,12 +126,19 @@ namespace HeatSheetHelperBlazor.Components.Pages
                 selectedHeatNumber = heatNum;
                 if (selectedEventNumber.HasValue)
                     ScrollToTable(selectedEventNumber.Value, heatNum);
+                _ = SaveSelectionStateAsync();
             }
         }
-
         private async void ScrollToTable(int eventNumber, int heatNumber)
         {
             await JS.InvokeVoidAsync("scrollToEventHeat", eventNumber, heatNumber);
+        }
+
+        private class SelectionState
+        {
+            public int? selectedEventNumber { get; set; }
+            public int? selectedHeatNumber { get; set; }
+            public string? selectedTeamName { get; set; }
         }
     }
 }

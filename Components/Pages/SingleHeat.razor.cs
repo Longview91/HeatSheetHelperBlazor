@@ -23,6 +23,7 @@ namespace HeatSheetHelperBlazor.Components.Pages
         private List<int> eventNumbers = new();
         private List<int> heatNumbers = new();
         private int? heatsBetween;
+        private string? eventDetails;
 
         async Task OnBackClicked() 
         {
@@ -41,6 +42,8 @@ namespace HeatSheetHelperBlazor.Components.Pages
                     .Distinct()
                     .OrderBy(n => n)
                     .ToList();
+
+                eventDetails = swimMeet.SwimEvents.FirstOrDefault(e => e.EventNumber == EventNumber)?.EventDetails;
 
                 if (selectedEventNumber.HasValue)
                 {

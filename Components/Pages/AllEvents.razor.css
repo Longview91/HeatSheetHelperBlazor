@@ -48,3 +48,22 @@
 .all-events-content {
     padding-top: 60px; /* Adjust this value to match the height of the dropdown */
 }
+
+.sticky-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+    .sticky-table th {
+        position: sticky;
+        top: 0;
+        background: #fff; /* Or match your table header background */
+        z-index: 2;
+        box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+    }
+
+.sticky-table-wrapper {
+    position: relative;
+    margin-bottom: 2rem; /* Space between tables */
+}

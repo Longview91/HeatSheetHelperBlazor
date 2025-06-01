@@ -114,6 +114,18 @@
         window.addEventListener('DOMContentLoaded', window.restoreScrollPosition);
     </script>
 
+    <script>
+        window.allEventsState = {
+            save: function (state) {
+                localStorage.setItem('allEventsState', JSON.stringify(state));
+            },
+            load: function () {
+                const state = localStorage.getItem('allEventsState');
+                return state ? JSON.parse(state) : null;
+            }
+        };
+    </script>
+
 </body>
 
 </html>
