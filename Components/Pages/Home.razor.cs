@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Components;
 using HeatSheetHelperBlazor.Components.Shared;
 using HeatSheetHelperBlazor.Models;
 using HeatSheetHelperBlazor.Services;
+using HeatSheetHelperBlazor.Helpers;
+using Microsoft.JSInterop;
 
 namespace HeatSheetHelperBlazor.Components.Pages
 {
@@ -18,7 +20,41 @@ namespace HeatSheetHelperBlazor.Components.Pages
 
         public string? SelectedSwimmer { get; private set; }
         [Inject] private NavigationManager Navigation { get; set; }
-
+        [Inject] IJSRuntime JS { get; set; }
+        private bool _restoredScroll = false;
+        private Task SaveScrollPositionAsync() => StateClass.SaveAsync(JS, "homeScrollY");
+        private Task RestoreScrollPositionAsync() => StateClass.RestoreAsync(JS, "homeScrollY");
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender && !_restoredScroll)
+            {
+                _restoredScroll = true;
+                await RestoreScrollPositionAsync();
+            }
+        }
+        private async Task OpenSingleHeatAsync(int eventNumber, int heatNumber)
+        {
+            await SaveScrollPositionAsync();
+            Navigation.NavigateTo($"/singleheat/{eventNumber}/{heatNumber}");
+        }
+        //private async Task SaveScrollPositionAsync()
+        //{
+        //    try
+        //    {
+        //        var scrollY = await JS.InvokeAsync<int>("getScrollY");
+        //        await JS.InvokeVoidAsync("localStorage.setItem", "homeScrollY", scrollY.ToString());
+        //    }
+        //    catch { }
+        //}
+        //private async Task RestoreScrollPositionAsync()
+        //{
+        //    try
+        //    {
+        //        var scrollY = await JS.InvokeAsync<int>("getStoredScrollY", "homeScrollY");
+        //        await JS.InvokeVoidAsync("window.scrollTo", 0, scrollY);
+        //    }
+        //    catch { }
+        //}
         private void OpenSingleHeat(int eventNumber, int heatNumber)
         {
             Navigation.NavigateTo($"/singleheat/{eventNumber}/{heatNumber}");
@@ -54,6 +90,10 @@ namespace HeatSheetHelperBlazor.Components.Pages
 
                 await PopulateSwimmerNameList();
 
+                // Reset scroll position and stored scroll value
+                await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+                await JS.InvokeVoidAsync("localStorage.setItem", "homeScrollY", "0");
+                await JS.InvokeVoidAsync("localStorage.setItem", "allEventsScrollY", "0");
             }
             catch (Exception ex)
             {

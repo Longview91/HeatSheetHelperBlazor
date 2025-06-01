@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Components;
 using HeatSheetHelperBlazor.Components.Shared;
 using HeatSheetHelperBlazor.Services;
+using Microsoft.JSInterop;
 
 namespace HeatSheetHelperBlazor.Components.Pages
 {
@@ -13,6 +14,8 @@ namespace HeatSheetHelperBlazor.Components.Pages
         [Parameter] public int HeatNumber { get; set; }
 
         [Inject] public MeetDataService MeetDataService { get; set; }
+        [Inject] NavigationManager Navigation { get; set; }
+        [Inject] IJSRuntime JS { get; set; }
 
         private HeatInfo? heatInfo;
         private int? selectedEventNumber;
@@ -21,6 +24,12 @@ namespace HeatSheetHelperBlazor.Components.Pages
         private List<int> heatNumbers = new();
         private int? heatsBetween;
 
+        async Task OnBackClicked() 
+        {
+            {
+                await JS.InvokeVoidAsync("history.back");
+            }
+        }
         protected override void OnParametersSet()
         {
             var swimMeet = MeetDataService.SwimMeet;

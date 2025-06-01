@@ -67,7 +67,7 @@
                         <tbody>
                             @foreach (var lane in filteredLanes)
                             {
-                                <tr @onclick="() => OpenSingleHeat(swimEvent.EventNumber, heat.HeatNumber)">
+                                <tr @onclick="() => OpenSingleHeatAsync(swimEvent.EventNumber, heat.HeatNumber)">
                                     <td>@(lane.LaneNumber == 0 ? "" : lane.LaneNumber.ToString())</td>
                                     <td><div><strong>@lane.SwimmerName</strong></div><div>@lane.TeamName @lane.RelayTeamLetter</div></td>
                                     <td>@(lane.SwimmerAge == 0 ? "" : lane.SwimmerAge.ToString())</td>

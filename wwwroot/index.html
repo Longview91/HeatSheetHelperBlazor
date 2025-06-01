@@ -82,7 +82,36 @@
         // Adjust on page load and window resize
         window.addEventListener('load', adjustDropdownPosition);
         window.addEventListener('resize', adjustDropdownPosition);
-        window.addEventListener('contextmenu'), adjustDropdownPosition);
+        window.addEventListener('contextmenu', adjustDropdownPosition);
+    </script>
+
+    <script>
+        window.getScrollY = function () {
+            // Always return a number
+            var y = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+            return Number.isFinite(y) ? y : 0;
+        };
+    </script>
+
+    <script>
+        window.getStoredScrollY = function (key) {
+            var val = localStorage.getItem(key);
+            var num = Number(val);
+            return isNaN(num) ? 0 : num;
+        };
+    </script>
+
+    <script>
+        window.saveScrollPosition = function () {
+            sessionStorage.setItem('scrollY', window.scrollY);
+        };
+        window.restoreScrollPosition = function () {
+            const y = sessionStorage.getItem('scrollY');
+            if (y !== null) window.scrollTo(0, parseInt(y));
+        };
+        window.addEventListener('beforeunload', window.saveScrollPosition);
+        window.addEventListener('unload', window.saveScrollPosition);
+        window.addEventListener('DOMContentLoaded', window.restoreScrollPosition);
     </script>
 
 </body>

@@ -3,7 +3,7 @@
 @using HeatSheetHelperBlazor.Services
 
 <h3>Single Heat Details - Event: @EventNumber Heat: @HeatNumber</h3>
-
+<div><button @onclick="OnBackClicked" > Back </button></div>
 @if (heatInfo != null)
 {
         <table class="table">

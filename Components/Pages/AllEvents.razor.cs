@@ -1,6 +1,7 @@
 ﻿using HeatSheetHelperBlazor.Components.Shared;
 using HeatSheetHelperBlazor.Services;
 using Microsoft.AspNetCore.Components;
+using HeatSheetHelperBlazor.Helpers;
 using Microsoft.JSInterop;
 
 namespace HeatSheetHelperBlazor.Components.Pages
@@ -14,12 +15,25 @@ namespace HeatSheetHelperBlazor.Components.Pages
         private List<string> teamNames = new();
         private string selectedTeamName = "";
         [Inject] private NavigationManager Navigation { get; set; }
+        [Inject] private IJSRuntime JS { get; set; }
+        private bool _restoredScroll = false;
 
-        private void OpenSingleHeat(int eventNumber, int heatNumber)
+        private Task SaveScrollPositionAsync() => StateClass.SaveAsync(JS, "allEventsScrollY");
+        private Task RestoreScrollPositionAsync() => StateClass.RestoreAsync(JS, "allEventsScrollY");
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
         {
+            if (firstRender) // && !_restoredScroll)
+            {
+                _restoredScroll = true;
+                await RestoreScrollPositionAsync();
+            }
+        }
+        private async Task OpenSingleHeatAsync(int eventNumber, int heatNumber)
+        {
+            await SaveScrollPositionAsync();
             Navigation.NavigateTo($"/singleheat/{eventNumber}/{heatNumber}");
         }
-
         protected override void OnInitialized()
         {
             base.OnInitialized();
@@ -85,7 +99,5 @@ namespace HeatSheetHelperBlazor.Components.Pages
         {
             await JS.InvokeVoidAsync("scrollToEventHeat", eventNumber, heatNumber);
         }
-
-        [Inject] private IJSRuntime JS { get; set; }
     }
 }
