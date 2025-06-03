@@ -23,8 +23,8 @@
     .heat-grid th {
         position: sticky;
         top: 0;
-        background: #f5f5f5;
-        color: #333;
+        background-color: var(--table-header-color, darkred);
+        color: white;
         font-weight: bold;
         z-index: 2;
         box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);

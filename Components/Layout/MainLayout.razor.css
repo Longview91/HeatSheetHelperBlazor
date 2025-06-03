@@ -13,8 +13,7 @@ nav, .nav-menu {
     position: sticky;
     top: 0;
     z-index: 1000;
-    background: #fff; /* Ensure background covers content behind */
-    background-color: rgba(139, 0, 0, 0.9);
+    background-color: var(--table-header-color, darkred);
     box-shadow: rgba(0,0,0,0,4) 10px 20px;
 }
 

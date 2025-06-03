@@ -3,19 +3,19 @@
 @using HeatSheetHelperBlazor.Services
 @inject MeetDataService MeetDataService
 
-<div class="event-selection-dropdown" style="display: flex; gap: 1em; margin-bottom: 1em;">
+<div class="event-selection-dropdown" style="display: flex; gap: 1em; margin-bottom: 1em; background-color: white;">
 
 @if (eventNumbers.Count > 0)
 {
             <select @onchange="OnEventNumberChanged" value="@selectedEventNumber">
-                <option value="">Select Event</option>
+                <option value="">Event</option>
             @foreach (var num in eventNumbers)
             {
                         <option value="@num">@num</option>
             }
             </select>
             <select @onchange="OnHeatNumberChanged" value="@selectedHeatNumber" disabled="@(heatNumbers.Count == 0)">
-                <option value="">Select Heat</option>
+                <option value="">Heat</option>
             @foreach (var num in heatNumbers)
             {
                         <option value="@num">@num</option>

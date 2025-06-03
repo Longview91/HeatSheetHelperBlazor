@@ -1,0 +1,9 @@
+﻿@page "/settings"
+
+<h3>Settings</h3>
+
+<label for="headerColor">Theme Color:</label>
+<input id="headerColor" type="color" @bind="headerColor" />
+
+<button @onclick="SaveColor">Save</button>
+<button @onclick="ResetColor">Reset</button>

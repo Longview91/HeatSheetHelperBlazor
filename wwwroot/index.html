@@ -126,6 +126,24 @@
         };
     </script>
 
+    <script>
+        window.blazorLocalStorage = {
+            get: function (key) {
+                return Promise.resolve(localStorage.getItem(key));
+            },
+            set: function (key, value) {
+                localStorage.setItem(key, value);
+                return Promise.resolve();
+            }
+        };
+    </script>
+
+    <script>
+        window.setTableHeaderColor = function (color) {
+            document.documentElement.style.setProperty('--table-header-color', color);
+        };
+    </script>
+
 </body>
 
 </html>
