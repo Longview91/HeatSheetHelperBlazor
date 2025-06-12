@@ -91,12 +91,18 @@ namespace HeatSheetHelper.Helpers
                     var match = regex.Match(line);
                     if (match.Success)
                     {
+                        string name = match.Groups["name"].Value.Trim();
+                        if (name.Contains(","))
+                        {
+                            name = SwapLastCommaFirstToFirstLast(name);
+                        }
+
                         var laneInfo = new LaneInfo
                         {
                             LaneNumber = int.TryParse(match.Groups["laneNumber"].Value.Trim(), out int ln) ? ln : 0,
                             TeamName = match.Groups["teamName"].Value.Trim(),
                             SeedTime = match.Groups["seedTime"].Value.Trim(),
-                            SwimmerName = SwapLastCommaFirstToFirstLast(match.Groups["name"].Value.Trim()),
+                            SwimmerName = name,
                             SwimmerAge = int.TryParse(match.Groups["age"].Value.Trim(), out int age) ? age : 0
                         };
                         if (currentHeat == null && currentEvent != null)
@@ -129,12 +135,18 @@ namespace HeatSheetHelper.Helpers
                     var match = regex.Match(line);
                     if (match.Success)
                     {
+                        string name = match.Groups["name"].Value.Trim();
+                        if (name.Contains(","))
+                        {
+                            name = SwapLastCommaFirstToFirstLast(name);
+                        }
+
                         var laneInfo = new LaneInfo
                         {
                             LaneNumber = int.TryParse(match.Groups["laneNumber"].Value.Trim(), out int ln) ? ln : 0,
                             TeamName = match.Groups["teamName"].Value.Trim(),
                             SeedTime = match.Groups["seedTime"].Value.Trim(),
-                            SwimmerName = SwapLastCommaFirstToFirstLast(match.Groups["name"].Value.Trim()),
+                            SwimmerName = name,
                             SwimmerAge = int.TryParse(match.Groups["age"].Value.Trim(), out int age) ? age : 0
                         };
                         if (currentHeat == null && currentEvent != null)
