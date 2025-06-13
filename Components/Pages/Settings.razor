@@ -2,8 +2,17 @@
 
 <h3>Settings</h3>
 
-<label for="headerColor">Theme Color:</label>
-<input id="headerColor" type="color" @bind="headerColor" />
+<div>
+    <label for="headerColor">Theme Color:</label>
+    <input id="headerColor" type="color" @bind="headerColor" />
+    
+    <button @onclick="SaveColor">Save</button>
+    <button @onclick="ResetColor">Reset</button>
+</div>
 
-<button @onclick="SaveColor">Save</button>
-<button @onclick="ResetColor">Reset</button>
+<div>
+    <label for="fontSizeSlider">Table Font Size: @fontSizePx</label>
+    <input id="fontSizeSlider" type="range" min="8" max="20" @bind="fontSize"/>
+    <button @onclick="SaveFontSize">Save Font Size</button>
+</div>
+

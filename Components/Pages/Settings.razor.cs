@@ -13,12 +13,20 @@ namespace HeatSheetHelperBlazor.Components.Pages
         [Inject] private NavigationManager Navigation { get; set; }
         [Inject] private IJSRuntime JS { get; set; }
         private string headerColor = "#8b0000"; // Default to darkred
+        private int fontSize = 16; // Default font size
+        private string fontSizePx => $"{fontSize}px";
 
         protected override async Task OnInitializedAsync()
         {
             var color = await JS.InvokeAsync<string>("blazorLocalStorage.get", "tableHeaderColor");
             if (!string.IsNullOrEmpty(color))
                 headerColor = color;
+
+            var storedFontSize = await JS.InvokeAsync<string>("blazorLocalStorage.get", "tableFontSize");
+            if (int.TryParse(storedFontSize, out var size))
+                fontSize = size;
+
+            await JS.InvokeVoidAsync("setTableFontSize", $"{fontSize}px");
         }
 
         private async Task SaveColor()
@@ -34,6 +42,12 @@ namespace HeatSheetHelperBlazor.Components.Pages
             await JS.InvokeVoidAsync("blazorLocalStorage.set", "tableHeaderColor", headerColor);
             await JS.InvokeVoidAsync("setTableHeaderColor", headerColor);
             Navigation.NavigateTo("/");
+        }
+
+        private async Task SaveFontSize()
+        {
+            await JS.InvokeVoidAsync("blazorLocalStorage.set", "tableFontSize", fontSize.ToString());
+            await JS.InvokeVoidAsync("setTableFontSize", $"{fontSize}px");
         }
     }
 }

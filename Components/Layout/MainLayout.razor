@@ -23,6 +23,12 @@
             {
                 await JS.InvokeVoidAsync("setTableHeaderColor", color);
             }
+
+            var fontSize = await JS.InvokeAsync<string>("blazorLocalStorage.get", "tableFontSize");
+            if (!string.IsNullOrEmpty(fontSize))
+            {
+                await JS.InvokeVoidAsync("setTableFontSize", $"{fontSize}px");
+            }
         }
     }
 }

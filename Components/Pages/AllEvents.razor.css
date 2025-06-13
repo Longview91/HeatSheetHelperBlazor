@@ -17,19 +17,19 @@
 }
 
 /* Table header and cell styling */
-.all-events-table th,
-.all-events-table td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: left;
-    font-size: 0.8em;
-}
+    .all-events-table th,
+    .all-events-table td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+        font-size: var(--table-font-size, 16px); /*0.8em;*/
+    }
 
 /* Table event header row, uses customizable color */
 .event-header {
     background-color: var(--table-header-color, darkred); /* Uses CSS variable for user customization */
     font-weight: bold;
-    font-size: 1.0em;
+    font-size: var(--table-font-size, 16px); /*1.0em;*/
     color: white;
 }
 
