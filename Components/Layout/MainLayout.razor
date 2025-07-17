@@ -1,7 +1,8 @@
 ﻿@inherits LayoutComponentBase
+@inject IJSRuntime JS
 
 <div class="page">
-    <div class="sidebar">
+    <div class="nav-menu">
         <NavMenu />
     </div>
 
@@ -11,3 +12,23 @@
         </article>
     </main>
 </div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var color = await JS.InvokeAsync<string>("blazorLocalStorage.get", "tableHeaderColor");
+            if (!string.IsNullOrEmpty(color))
+            {
+                await JS.InvokeVoidAsync("setTableHeaderColor", color);
+            }
+
+            var fontSize = await JS.InvokeAsync<string>("blazorLocalStorage.get", "tableFontSize");
+            if (!string.IsNullOrEmpty(fontSize))
+            {
+                await JS.InvokeVoidAsync("setTableFontSize", $"{fontSize}px");
+            }
+        }
+    }
+}

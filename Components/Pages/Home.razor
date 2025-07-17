@@ -1,61 +1,55 @@
 ﻿@page "/"
-
-@using HeatSheetHelper.Model
+@using HeatSheetHelperBlazor.Models
 @using HeatSheetHelper.Helpers
 
-<PageTitle>Main Page</PageTitle>
+<PageTitle>Heat Sheet Helper</PageTitle>
 
-<h3>Main Page</h3>
-
-<div class="grid" style="display: grid; grid-template-rows: 35px auto auto auto 1fr auto; padding: 3px;">
-    <!-- Button -->
-    <button class="button-style" @onclick="OnPDFPickClicked" style="max-width: 170px; align-self: center;">
-        Choose a Heat Sheet
-    </button>
-
-    @*     <!-- Label with Tap Gesture -->
-    <label class="grid-label-style" style="width: 60px; font-size: 11px; display: none;" @onclick="TapGestureRecognizer_Tapped">
-        Tap Me For All Events
-    </label>
-
-    <!-- Entry -->
-    <input type="text" class="grid-label-style" placeholder="Choose a heat sheet to start" style="display: none;" @oninput="SwimmerEditor_TextChanged" />
-*@
-    @if (swimmerNameList.Any())
+<h3>Heat Sheet Helper</h3>
+    @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
     {
-        <!-- Picker -->
-        <select @onchange="SwimmerPicker_SelectedIndexChanged">
-            <option value="">Select a swimmer</option>
-            @foreach (var swimmer in swimmerNameList)
+        <!-- TextBox -->
+        <input type="text"
+        placeholder="Type to filter swimmers..."
+        @bind="SwimmerListService.SwimmerFilter"
+        @bind:event="oninput"
+        style="margin-bottom: 8px; width: 100%; max-width: 300px;" />
+
+        <!-- Multi-select checkboxes -->
+        <div style="max-height: 100px; overflow-y: auto; border: 1px solid #ccc; padding: 4px; margin-bottom: 8px;">
+            @foreach (var swimmer in SwimmerListService.FilteredSwimmerNames)
             {
-                <option value="@swimmer">@swimmer</option>
+                <label style="display: block;">
+                    <input type="checkbox"
+                    checked="@SwimmerListService.SelectedSwimmers.Contains(swimmer)"
+                    @onchange="() => ToggleSwimmer(swimmer)" />
+                    @swimmer
+                </label>
             }
-        </select>
+        </div>
     }
 
-    @if (swimmerHeats.Any())
+    @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
     {
         <div class="heats-grid">
-            <h4>Heats for @SelectedSwimmer</h4>
             <table>
                 <thead>
                     <tr>
-                        <th>Event</th>
-                        <th>Heat</th>
-                        <th>Lane</th>
-                        <th>Event Name</th>
-                        <th>Start Time</th>
+                        <th>E</th>
+                        <th>H</th>
+                        <th>L</th>
+                        <th>Event@("\n")Swimmer Name</th>
+                        <th>Start Time@("\n")Seed Time</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var heat in swimmerHeats)
                     {
-                        <tr>
+                        <tr @onclick="() => OpenSingleHeatAsync(heat.EventNumber, heat.HeatNumber)">
                             <td>@heat.EventNumber</td>
-                            <td>@heat.HeatNumber</td>
+                            <td>@(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())</td>
                             <td>@heat.LaneNumber</td>
-                            <td>@heat.EventName</td>
-                            <td>@heat.StartTime</td>
+                            <td>@heat.EventName@("\n")<strong>@heat.SwimmerName</strong></td>
+                            <td>@heat.StartTime@("\n")<strong>@heat.SeedTime</strong></td>
                         </tr>
                     }
                 </tbody>
@@ -67,42 +61,10 @@
         <div></div>
     }
 
-@*    <!-- Label -->
-    <label class="grid-label-style" style="display: none;">
-        Tap a heat below to display the full heat
-    </label>
-
-    <!-- CollectionView -->
-    <div class="collection-view" style="display: none;" @onchange="OnGridItemTapped">
-        <div class="title-grid" style="display: grid; grid-template-columns: auto auto auto 115fr auto 80px; column-gap: 7px; padding: 5px;">
-            <label class="grid-header-label-style">E</label>
-            <label class="grid-header-label-style">H</label>
-            <label class="grid-header-label-style">L</label>
-            <label class="grid-header-label-style" style="text-align: center;">Event</label>
-            <label class="grid-header-label-style" style="text-align: end;">Start Time</label>
-            <label class="grid-header-label-style" style="text-align: end;">PB Time</label>
-            <div class="box-view-style" style="height: 0.01px;"></div>
-        </div>
-
-        @foreach (var eventGrid in EventGrids)
-        {
-            <div class="grid" style="display: grid; grid-template-columns: auto auto auto 15fr auto 80px; column-gap: 5px; padding: 5px;">
-                <label class="grid-label-style" style="grid-column: 3 / span 6; font-size: 12px;">@eventGrid.SwimmerName</label>
-                <label class="grid-label-style" style="grid-column: 4 / span 2; font-weight: bold;">@eventGrid.HeatCount</label>
-
-                <label class="grid-label-style">@eventGrid.EventNum</label>
-                <label class="grid-label-style">@eventGrid.HeatNum</label>
-                <label class="grid-label-style">@eventGrid.LaneNum</label>
-                <label class="grid-label-style">@eventGrid.EventName</label>
-                <label class="grid-label-style">@eventGrid.EventTime</label>
-                <label class="grid-label-style">@eventGrid.PBTime</label>
-                <div class="box-view-style" style="height: 0.01px;"></div>
-            </div>
-        }
-    </div>
-
-    <!-- Disclaimer -->
-    <label class="grid-label-style" style="font-size: 10px; color: red; text-align: center; align-self: end;">
-        Disclaimer: This app is not official and may miss data. Please review the actual heat sheet to verify these results are correct.
-    </label> *@
+<div style="display: flex; justify-content: center; align-items: center; margin-top: 24px; margin-bottom: 24px;">
+    <button class="button-style" @onclick="OnPDFPickClicked" style="max-width: 170px;">
+        @(MeetDataService.SwimMeet.SwimEvents.Count == 0
+        ? "Choose a Heat Sheet"
+        : "Choose a different Heat Sheet")
+    </button>
 </div>

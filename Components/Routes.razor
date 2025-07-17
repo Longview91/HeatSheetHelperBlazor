@@ -1,6 +1,46 @@
-﻿<Router AppAssembly="@typeof(MauiProgram).Assembly">
+﻿@using HeatSheetHelperBlazor.Helpers
+
+<Router AppAssembly="@typeof(MauiProgram).Assembly"
+        OnNavigateAsync="OnNavigateAsync">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
 </Router>
+
+@code {
+    [Inject] NavigationManager Navigation { get; set; }
+    [Inject] IJSRuntime JS { get; set; }
+
+    private string? _lastUri;
+
+    protected override void OnInitialized()
+    {
+        _lastUri = Navigation.Uri;
+    }
+
+    private async Task OnNavigateAsync(NavigationContext args)
+    {
+        // Save scroll position for the page being left
+        if (_lastUri != null)
+        {
+            var key = GetScrollKeyForUri(_lastUri);
+            if (key != null)
+                await StateClass.SaveAsync(JS, key);
+        }
+
+        // Update the last URI to the new one
+        _lastUri = args.Path;
+    }
+
+    private string? GetScrollKeyForUri(string uri)
+    {
+        // Map URIs to scroll keys
+        if (uri.Contains("allevents", StringComparison.OrdinalIgnoreCase))
+            return "allEventsScrollY";
+        if (uri.Contains("/home", StringComparison.OrdinalIgnoreCase) || uri == "")
+            return "homeScrollY";
+        // Add more mappings as needed
+        return null;
+    }
+}

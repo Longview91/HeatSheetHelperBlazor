@@ -1,0 +1,62 @@
+﻿.event-swimmer-cell > div {
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+}
+
+.heats-grid {
+    max-height: 50vh; /* or whatever height you want */
+    overflow-y: auto;
+}
+
+    .heats-grid table {
+        width: 100%;
+        table-layout: auto;
+        background: #fff;
+    }
+
+    .heats-grid th,
+    .heats-grid td {
+        border: 1px solid #ccc;
+        padding: 0px;
+        text-align: left;
+        white-space: break-spaces;
+        word-break: break-word;
+        font-size: var(--table-font-size, 16px); /*0.8em;*/
+    }
+
+    .heats-grid th {
+        position: sticky;
+        top: 0;
+        background-color: var(--table-header-color, darkred);
+        color: white;
+        font-weight: bold;
+        z-index: 2;
+        box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+    }
+
+        .heats-grid th:nth-child(1),
+        .heats-grid td:nth-child(1), /* E */
+        .heats-grid th:nth-child(2),
+        .heats-grid td:nth-child(2), /* H */
+        .heats-grid th:nth-child(3),
+        .heats-grid td:nth-child(3) /* L */ {
+            width: 4vw;
+            min-width: 20px;
+            max-width: 25px;
+            text-align: center;
+        }
+
+        .heats-grid th:nth-child(4),
+        .heats-grid td:nth-child(4) /* Event & Swimmer Name */ {
+            width: 30vw;
+            min-width: 200px;
+            max-width: 350px;
+        }
+
+        .heats-grid th:nth-child(5),
+        .heats-grid td:nth-child(5) /* Start Time */ {
+            width: 10vw;
+            min-width: 65px;
+            max-width: 100px;
+        }

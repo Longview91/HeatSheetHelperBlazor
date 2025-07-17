@@ -1,40 +1,87 @@
-﻿@page "/AllEvents"
+﻿@page "/allevents"
+@using HeatSheetHelperBlazor.Components.Shared
+@using HeatSheetHelperBlazor.Services
+@inject MeetDataService MeetDataService
 
-<h3>All Events</h3>
+<div class="event-selection-dropdown" style="display: flex; gap: 1em; margin-bottom: 1em; background-color: white;">
 
-@if (allEvents is null)
+@if (eventNumbers.Count > 0)
 {
-    <h6>Loading ... </h6>
+            <select @onchange="OnEventNumberChanged" value="@selectedEventNumber">
+                <option value="">Event</option>
+            @foreach (var num in eventNumbers)
+            {
+                        <option value="@num">@num</option>
+            }
+            </select>
+            <select @onchange="OnHeatNumberChanged" value="@selectedHeatNumber" disabled="@(heatNumbers.Count == 0)">
+                <option value="">Heat</option>
+            @foreach (var num in heatNumbers)
+            {
+                        <option value="@num">@num</option>
+            }
+            </select>
+}
+@if (teamNames.Count > 0)
+{
+    <select @onchange="OnTeamNameChanged" value="@selectedTeamName" style="margin-right: 1em;">
+        <option value="">All Teams</option>
+        @foreach (var team in teamNames)
+        {
+            <option value="@team">@team</option>
+        }
+    </select>
+}
+</div>
+
+@if (MeetDataService.SwimMeet?.SwimEvents != null)
+{
+    <div class="all-events-content" style="flex;">
+        @foreach (var swimEvent in MeetDataService.SwimMeet.SwimEvents)
+        {
+            foreach (var heat in swimEvent.Heats)
+            {
+                // Only show heats with at least one lane matching the selected team (or all if none selected)
+                var filteredLanes = string.IsNullOrEmpty(selectedTeamName)
+                ? heat.LaneInfos
+                : heat.LaneInfos.Where(l => l.TeamName == selectedTeamName);
+
+                if (filteredLanes.Any())
+                {
+                    <table class="table all-events-table" id="event-@swimEvent.EventNumber-heat-@heat.HeatNumber">
+                        <thead>
+                            <tr>
+                                <th colspan="5" class="event-header">
+                                    Event @swimEvent.EventNumber: @swimEvent.EventDetails
+                                    | Heat @(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())
+                                    | at @heat.StartTime
+                                </th>
+                            </tr>
+                            <tr>
+                                <th>Lane</th>
+                                <th><div>Swimmer</div><div>Team</div></th>
+                                <th>Age</th>
+                                <th>Seed Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var lane in filteredLanes)
+                            {
+                                <tr @onclick="() => OpenSingleHeatAsync(swimEvent.EventNumber, heat.HeatNumber)">
+                                    <td>@(lane.LaneNumber == 0 ? "" : lane.LaneNumber.ToString())</td>
+                                    <td><div><strong>@lane.SwimmerName</strong></div><div>@lane.TeamName @lane.RelayTeamLetter</div></td>
+                                    <td>@(lane.SwimmerAge == 0 ? "" : lane.SwimmerAge.ToString())</td>
+                                    <td>@lane.SeedTime</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            }
+        }
+    </div>
 }
 else
 {
-    <div class="eventHeader">
-        @foreach (var anEvent in allEvents) {            
-            <h4>
-                <font color="white">
-                    #@anEvent.EventNumber @anEvent.EventDetails
-                </font>
-            </h4>
-            @foreach (var heat in anEvent.Heats)
-            {
-                <h5>
-                    <font color="white">
-                        Heat @heat.HeatNumber - Start time: @heat.StartTime
-                    </font>
-                </h5>
-                <div class="grid">
-                    <QuickGrid Items="@heat.LaneInfos">
-                        <PropertyColumn Property="@(a => a.LaneNumber)" Title="Lane" />
-                        <PropertyColumn Property="@(a => a.SwimmerName)" Title="Name" />
-                        <PropertyColumn Property="@(a => a.SwimmerAge)" Title="Age" />
-                        <PropertyColumn Property="@(a => a.SeedTime)" Title="Seed Time" />
-                    </QuickGrid>
-                </div>
-            }
-        }
-</div>    
-}
-
-@code {
-
+    <p>No events loaded.</p>
 }

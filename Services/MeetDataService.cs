@@ -1,0 +1,19 @@
+﻿using HeatSheetHelperBlazor.Components.Shared;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace HeatSheetHelperBlazor.Services
+{
+    public class MeetDataService
+    {
+        public SwimMeet SwimMeet { get; set; } = new();
+
+        public MeetDataService()
+        {
+            SwimMeet = new SwimMeet();
+        }
+    }
+}

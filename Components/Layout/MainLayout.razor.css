@@ -8,8 +8,22 @@ main {
     flex: 1;
 }
 
+/* Make the nav menu fixed at the top */
+nav, .nav-menu {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: var(--table-header-color, darkred);
+    box-shadow: rgba(0,0,0,0,4) 10px 20px;
+}
+
+/* Add padding to the page content so it doesn't go under the nav */
+.main-layout .content {
+    padding-top: 56px; /* Adjust to match your nav height */
+}
+
 .sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    background-image: linear-gradient(180deg, #b71c1c 0%, #880808 70%);
 }
 
 .top-row {
@@ -74,4 +88,14 @@ main {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
     }
+}
+
+.hide-nav {
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+}
+
+.show-nav {
+    transform: translateY(0);
+    transition: transform 0.3s ease;
 }

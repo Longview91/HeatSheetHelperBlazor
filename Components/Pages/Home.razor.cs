@@ -1,40 +1,69 @@
 ﻿using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using System.Text.RegularExpressions;
-using Dapper;
 using HeatSheetHelper.Helpers;
-using System.Collections.ObjectModel;
-using HeatSheetHelper.Model;
 using Microsoft.AspNetCore.Components;
-using HeatSheetHelperBlazor;
-using HeatSheetHelperBlazor.Components;
-using Microsoft.AspNetCore.Components.Web;
-using System.Threading.Tasks;
+using HeatSheetHelperBlazor.Components.Shared;
+using HeatSheetHelperBlazor.Models;
+using HeatSheetHelperBlazor.Services;
+using HeatSheetHelperBlazor.Helpers;
+using Microsoft.JSInterop;
 
 namespace HeatSheetHelperBlazor.Components.Pages
 {
     public partial class Home
     {
+        [Inject] public MeetDataService MeetDataService { get; set; }
+        [Inject] public SwimmerListService SwimmerListService { get; set; }
         private ErrorModal ErrorModal = new();
-        private List<string> swimmerNameList = new();
-        private List<Swimmer> swimmerHeats = new();
-        private List<Swimmer> allSwimmers = new();
+        private List<SwimmerHeatRow> swimmerHeats = new();
 
         public string? SelectedSwimmer { get; private set; }
+        [Inject] private NavigationManager Navigation { get; set; }
+        [Inject] IJSRuntime JS { get; set; }
+        private bool _restoredScroll = false;
+        private Task SaveScrollPositionAsync() => StateClass.SaveAsync(JS, "homeScrollY");
+        private Task RestoreScrollPositionAsync() => StateClass.RestoreAsync(JS, "homeScrollY");
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender && !_restoredScroll)
+            {
+                _restoredScroll = true;
+                await RestoreScrollPositionAsync();
+            }
+        }
+        private async Task OpenSingleHeatAsync(int eventNumber, int heatNumber)
+        {
+            await SaveScrollPositionAsync();
+            Navigation.NavigateTo($"/singleheat/{eventNumber}/{heatNumber}");
+        }
+        //private async Task SaveScrollPositionAsync()
+        //{
+        //    try
+        //    {
+        //        var scrollY = await JS.InvokeAsync<int>("getScrollY");
+        //        await JS.InvokeVoidAsync("localStorage.setItem", "homeScrollY", scrollY.ToString());
+        //    }
+        //    catch { }
+        //}
+        //private async Task RestoreScrollPositionAsync()
+        //{
+        //    try
+        //    {
+        //        var scrollY = await JS.InvokeAsync<int>("getStoredScrollY", "homeScrollY");
+        //        await JS.InvokeVoidAsync("window.scrollTo", 0, scrollY);
+        //    }
+        //    catch { }
+        //}
+        private void OpenSingleHeat(int eventNumber, int heatNumber)
+        {
+            Navigation.NavigateTo($"/singleheat/{eventNumber}/{heatNumber}");
+        }
 
         private async Task OnPDFPickClicked()
         {
             try
             {
-                if (allSwimmers != null)
-                {
-                    allSwimmers.Clear();
-                }
-                else
-                {
-                    allSwimmers = new List<Swimmer>();
-                }
-
                     var fileResult = await FilePicker.PickAsync(new PickOptions
                     {
                         PickerTitle = "Pick the heat sheet please",
@@ -54,267 +83,151 @@ namespace HeatSheetHelperBlazor.Components.Pages
                     heatSheet.AddRange(Regex.Split(pdfText, "\n").ToList());
                 }
 
-                Tuple<string, string, string, bool> relayInfo = null;
-                bool isAlternate = false;
+                var swimMeet = SwimmerFunctions.ParseHeatSheetToEvents(heatSheet);
+                MeetDataService.SwimMeet = swimMeet;
 
-                allSwimmers = SwimmerFunctions.PutHeatSheetInClasses(heatSheet);
+                //SwimmerFunctions.FillEmptyTimes();
 
-                SwimmerFunctions.FillEmptyTimes();
+                await PopulateSwimmerNameList();
 
-                await CreateInitialList();
-
+                // Reset scroll position and stored scroll value
+                await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+                await JS.InvokeVoidAsync("localStorage.setItem", "homeScrollY", "0");
+                await JS.InvokeVoidAsync("localStorage.setItem", "allEventsScrollY", "0");
             }
             catch (Exception ex)
             {
                 ErrorModal.Show("Error", "An error was encountered when loading the heat sheet: " + ex.Message);
             }
         }
-        private async Task CreateInitialList()
+
+        private async Task PopulateSwimmerNameList()
         {
-            swimmerNameList = await Task.Run(() =>
+            if (MeetDataService.SwimMeet == null) return;
+
+            SwimmerListService.SwimmerNameList = await Task.Run(() =>
             {
-                return allSwimmers
-                .Select(s => s.Name)
+                return MeetDataService.SwimMeet.SwimEvents
+                .SelectMany(ev => ev.Heats)
+                .SelectMany(heat => heat.LaneInfos)
+                .Select(lane => lane.SwimmerName)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
                 .Distinct()
                 .OrderBy(name => name)
                 .ToList();
             });
+        }
 
+        //private async Task SwimmerPicker_SelectedIndexChanged(ChangeEventArgs e)
+        //{
+        //    var selected = e.Value?.ToString();
+        //    SwimmerListService.SelectedSwimmer = selected;
+        //    if (!string.IsNullOrEmpty(selected))
+        //    {
+        //        await LoadSwimmerHeats(selected);
+        //    }
+        //    else
+        //    {
+        //        swimmerHeats.Clear();
+        //        StateHasChanged();
+        //    }
+        //}
+        private async Task ToggleSwimmer(string swimmer)
+        {
+            if (SwimmerListService.SelectedSwimmers.Contains(swimmer))
+                SwimmerListService.SelectedSwimmers.Remove(swimmer);
+            else
+                SwimmerListService.SelectedSwimmers.Add(swimmer);
+
+            await LoadSwimmerHeatsForSelected();
             StateHasChanged();
         }
 
-        private async Task SwimmerPicker_SelectedIndexChanged(ChangeEventArgs e)
+        private async Task LoadSwimmerHeatsForSelected()
         {
-            SelectedSwimmer = e.Value?.ToString();
-
-            if (!string.IsNullOrEmpty(SelectedSwimmer))
+            var selected = SwimmerListService.SelectedSwimmers;
+            if (selected.Count == 0)
             {
-                // Fetch heats for the selected swimmer
-                await LoadSwimmerHeats(SelectedSwimmer);
+                swimmerHeats.Clear();
+                return;
             }
+
+            swimmerHeats = await Task.Run(() =>
+            {
+                if (MeetDataService.SwimMeet == null || MeetDataService.SwimMeet.SwimEvents == null)
+                    return new List<SwimmerHeatRow>();
+
+                return MeetDataService.SwimMeet.SwimEvents
+                    .SelectMany(ev => (ev.Heats ?? new List<HeatInfo>())
+                        .SelectMany(heat => (heat.LaneInfos ?? Enumerable.Empty<LaneInfo>())
+                            .Select(lane => new { ev, heat, lane })))
+                    .Where(x => selected.Contains(x.lane.SwimmerName))
+                    .Select(x => new SwimmerHeatRow
+                    {
+                        EventNumber = x.ev.EventNumber,
+                        HeatNumber = x.heat.HeatNumber,
+                        LaneNumber = x.lane.LaneNumber,
+                        SwimmerName = x.lane.SwimmerName,
+                        EventName = x.ev.EventDetails,
+                        StartTime = x.heat.StartTime,
+                        SeedTime = x.lane.SeedTime
+                    })
+                    .OrderBy(x => x.EventNumber)
+                    .ThenBy(x => x.HeatNumber)
+                    .ThenBy(x => x.LaneNumber)
+                    .ToList();
+            });
         }
-
-        private async Task LoadSwimmerHeats(string swimmerName)
-        {
-            try
-            {
-                swimmerHeats = await Task.Run(() =>
-                {
-                    return (from swimmer in allSwimmers
-                            where swimmer.Name == swimmerName
-                            select new Swimmer
-                            {
-                                EventNumber = swimmer.EventNumber,
-                                HeatNumber = swimmer.HeatNumber,
-                                EventName = swimmer.EventName,
-                                StartTime = swimmer.StartTime,
-                                LaneNumber = swimmer.LaneNumber
-                            }).ToList();
-                });
-
-                // Update the UI (e.g., bind swimmerHeats to a grid or list)
-                StateHasChanged();
-            }
-            catch (Exception ex)
-            {
-                ErrorModal.Show("Error", "An error was encountered when loading the swimmer heats: " + ex.Message);
-            }
-        }
-        //private void AddToGrid(string swimmerName)
+        //private async Task LoadSwimmerHeats(string swimmerName)
         //{
-        //    if (selectedSwimmers.Count > 1)
-        //    {
-        //        TapHeatLabel.IsVisible = true;
-        //        foreach (var swimEvent in eventGrid)
-        //        {
-        //            swimEvent.HeatCount = "";
-        //        }
-        //    }
-        //    var parameter = new DynamicParameters();
-        //    parameter.Add("@name", swimmerName);
-
-        //    string commandText = "SELECT s.name AS SwimmerName, e.eventNumber AS EventNum, h.heatNumber AS HeatNum, s.laneNumber AS LaneNum, e.eventName as EventName, h.startTime AS EventTime, s.seedTime AS PBTime, e.isRelay AS IsRelay FROM Swimmer s ";
-        //    commandText += "JOIN Heat h ON h.heatId = s.heatId ";
-        //    commandText += "JOIN Event e ON e.eventId = h.eventId ";
-        //    commandText += "WHERE s.name = @name ";
-        //    commandText += "ORDER BY eventNumber ASC, heatNumber ASC, laneNumber ASC;";
-
         //    try
         //    {
-        //        var heats = App.InMemoryConnection.Query<EventGrid>(commandText, param: parameter).ToList();
-
-        //        foreach (var heat in heats)
+        //        swimmerHeats = await Task.Run(() =>
         //        {
-        //            if (heat.IsRelay)
-        //            {
-        //                commandText = "SELECT GROUP_CONCAT(s.name, ', ') FROM Swimmer s ";
-        //                commandText += "JOIN Heat h ON h.heatId = s.heatId ";
-        //                commandText += "JOIN Event e ON e.eventId = h.eventId ";
-        //                commandText += "WHERE e.eventNumber = '" + heat.EventNum + "' AND h.heatNumber = '" + heat.HeatNum + "' AND s.laneNumber = '" + heat.LaneNum + "';";
-        //                heat.SwimmerName = App.InMemoryConnection.Query<string>(commandText).FirstOrDefault();
+        //            if (MeetDataService.SwimMeet == null || MeetDataService.SwimMeet.SwimEvents == null)
+        //                return new List<SwimmerHeatRow>();
 
-        //                string pattern = @"^([^,]*, [^,]*), ";
+        //            return MeetDataService.SwimMeet.SwimEvents
+        //                .SelectMany(ev => (ev.Heats ?? new List<HeatInfo>())
+        //                    .SelectMany(heat => (heat.LaneInfos ?? Enumerable.Empty<LaneInfo>())
+        //                        .Select(lane => new { ev, heat, lane })))
+        //                .Where(x => string.Equals(x.lane.SwimmerName, swimmerName, StringComparison.OrdinalIgnoreCase))
+        //                .Select(x => new SwimmerHeatRow
+        //                {
+        //                    EventNumber = x.ev.EventNumber,
+        //                    HeatNumber = x.heat.HeatNumber,
+        //                    LaneNumber = x.lane.LaneNumber,
+        //                    EventName = x.ev.EventDetails,
+        //                    StartTime = x.heat.StartTime,
+        //                    SeedTime = x.lane.SeedTime
+        //                })
+        //                .OrderBy(x => x.EventNumber)
+        //                .ThenBy(x => x.HeatNumber)
+        //                .ThenBy(x => x.LaneNumber)
+        //                .ToList();
+        //        });
 
-        //                // Use Regex.Replace with a MatchEvaluator function
-        //                heat.SwimmerName = Regex.Replace(heat.SwimmerName, pattern, ReplaceSecondComma);
-        //            }
-        //            int index = ObservableCollectionInsertIndex(eventGrid, heat);
-        //            if (eventGrid.FirstOrDefault(e => e.SwimmerName.Contains(heat.SwimmerName) && e.EventNum == heat.EventNum && e.HeatNum == heat.HeatNum && e.LaneNum == heat.LaneNum) == null)
-        //            {
-        //                eventGrid.Insert(index < 0 ? ~index : index, heat);
-        //            }
-        //        }
-
-        //        if (selectedSwimmers.Count == 1)
-        //        {
-        //            SetHeatCounts(eventGrid);
-        //        }
+        //        StateHasChanged();
         //    }
         //    catch (Exception ex)
         //    {
-        //        Console.WriteLine(ex.ToString());
+        //        ErrorModal.Show("Error", "An error was encountered when loading the swimmer heats: " + ex.Message);
         //    }
         //}
-        //private void RemoveFromGrid(string swimmerName)
+
+        protected override async Task OnInitializedAsync()
+        {
+            if (SwimmerListService.SelectedSwimmers != null && SwimmerListService.SelectedSwimmers.Count > 0)
+            {
+                await LoadSwimmerHeatsForSelected();
+            }
+        }
+        //protected override async Task OnParametersSetAsync()
         //{
-        //    var parameter = new DynamicParameters();
-        //    parameter.Add("@name", swimmerName);
-
-        //    string commandText = "SELECT s.name AS SwimmerName, e.eventNumber AS EventNum, h.heatNumber AS HeatNum, s.laneNumber AS LaneNum, e.eventName as EventName, h.startTime AS EventTime, s.seedTime AS PBTime FROM Swimmer s ";
-        //    commandText += "JOIN Heat h ON h.heatId = s.heatId ";
-        //    commandText += "JOIN Event e ON e.eventId = h.eventId ";
-        //    commandText += "WHERE name = @name ";
-        //    commandText += "GROUP BY e.eventNumber, h.heatNumber, s.laneNumber, e.eventName, h.startTime, s.seedTime ";
-        //    commandText += "ORDER BY eventNumber ASC, heatNumber ASC, laneNumber ASC;";
-
-        //    var heats = App.InMemoryConnection.Query<EventGrid>(commandText, param: parameter).ToList();
-        //    foreach (var heat in heats)
+        //    if (!string.IsNullOrEmpty(SwimmerListService.SelectedSwimmer))
         //    {
-        //        eventGrid.Remove(eventGrid.FirstOrDefault(e => e.SwimmerName.Contains(heat.SwimmerName) && !selectedSwimmers.Any(s=> e.SwimmerName.Contains(s))));
+        //        await LoadSwimmerHeats(SwimmerListService.SelectedSwimmer);
         //    }
-
-        //    if (selectedSwimmers.Count == 1)
-        //    {
-        //        SetHeatCounts(eventGrid);
-        //    }
-        //}
-        //private static int ObservableCollectionInsertIndex(ObservableCollection<EventGrid> eventGrid, EventGrid heat)
-        //{
-        //    var eventGridComparer = new EventGrid.EventGridComparer();
-        //    int insertIndex = eventGrid.ToList().BinarySearch(heat, eventGridComparer);
-        //    return insertIndex;
-        //}
-        //private void SwimmerPicker_Focused(object sender, FocusEventArgs e)
-        //{
-        //    swimmerPicker.Title = "";
-        //}
-        //private async void OnGridItemTapped(object sender, SelectionChangedEventArgs e)
-        //{
-        //    if ((sender as CollectionView).SelectedItem == null)
-        //        return;
-        //    var newSelectedItem = e.CurrentSelection[0] as EventGrid;
-
-        //    var parameter = new DynamicParameters();
-        //    parameter.Add("@eventNum", newSelectedItem.EventNum);
-        //    parameter.Add("@heatNum", newSelectedItem.HeatNum);
-
-        //    string commandText = "SELECT e.eventNumber AS EventNum, h.heatNumber AS HeatNum, s.laneNumber AS LaneNum, GROUP_CONCAT(s.name, '\r\n') AS SwimmerName, GROUP_CONCAT(s.age, '\r\n') AS Age, s.teamName as TeamName, s.seedTime AS SeedTime FROM Swimmer s ";
-        //    commandText += "JOIN Heat h ON h.heatId = s.heatId ";
-        //    commandText += "JOIN Event e ON e.eventId = h.eventId ";
-        //    commandText += "WHERE eventNum = @eventNum AND heatNum = @heatNum ";
-        //    commandText += "GROUP BY e.eventNumber, h.heatNumber, s.laneNumber, s.teamName, s.seedTime ";
-        //    commandText += "ORDER BY eventNumber ASC, heatNumber ASC, laneNumber ASC;";
-
-        //    var heats = App.InMemoryConnection.Query<HeatInfo>(commandText, param: parameter).ToList();
-
-        //    await Navigation.PushAsync(new HeatSheetInfo(heats));
-
-        //    EventList.SelectedItem = null;
-        //}
-        //private static void SetHeatCounts(ObservableCollection<EventGrid> eventGrid)
-        //{
-        //    int prevHeatId = 0;
-        //    EventGrid prevSwimEvent = null;
-        //    foreach (var swimEvent in eventGrid)
-        //    {
-        //        var parameter = new DynamicParameters();
-        //        parameter.Add("@heatNumber", swimEvent.HeatNum);
-        //        parameter.Add("@eventNumber", swimEvent.EventNum);
-
-        //        string commandText = "SELECT h.heatId FROM Heat h ";
-        //        commandText += "JOIN Event e ON e.eventId = h.eventId ";
-        //        commandText += "WHERE e.eventNumber = @eventNumber AND h.heatNumber = @heatNumber;";
-
-        //        var currentHeatId = App.InMemoryConnection.Query<int>(commandText, param: parameter).FirstOrDefault();
-
-        //        if (prevHeatId != 0)
-        //        {
-        //            prevSwimEvent.HeatCount = "Heats b/w: " + (currentHeatId - prevHeatId).ToString();
-        //        }
-        //        prevHeatId = currentHeatId;
-        //        prevSwimEvent = swimEvent;
-        //    }
-        //}
-        //static string ReplaceSecondComma(Match match)
-        //{
-        //    // Replace the second comma with a different character or an empty string
-        //    return match.Groups[1].Value + ",\r\n";
-        //}
-        ////private async void OnAllEventsClicked(object sender, EventArgs e)
-        ////{
-        ////    var parameter = new DynamicParameters();
-
-        ////    string commandText = "SELECT e.eventNumber AS EventNum, h.heatNumber AS HeatNum, s.laneNumber AS LaneNum, GROUP_CONCAT(s.name, '\r\n') AS SwimmerName, GROUP_CONCAT(s.age, '\r\n') AS Age, s.teamName as TeamName, s.seedTime AS SeedTime, e.eventName AS EventInfo FROM Swimmer s ";
-        ////    commandText += "JOIN Heat h ON h.heatId = s.heatId ";
-        ////    commandText += "JOIN Event e ON e.eventId = h.eventId ";
-        ////    commandText += "GROUP BY e.eventNumber, h.heatNumber, s.laneNumber, s.teamName, s.seedTime ";
-        ////    commandText += "ORDER BY eventNumber ASC, heatNumber ASC, laneNumber ASC;";
-
-        ////    var heats = App.InMemoryConnection.Query<HeatInfo>(commandText, param: parameter).ToObservableCollection();
-
-        ////    await Navigation.PushAsync(new AllEvents(heats));
-
-        ////}
-        //private async void TapGestureRecognizer_Tapped(object sender, TappedEventArgs e)
-        //{
-        //    var parameter = new DynamicParameters();
-
-        //    string commandText = "SELECT e.eventNumber AS EventNum, h.heatNumber AS HeatNum, h.startTime AS StartTime, s.laneNumber AS LaneNum, GROUP_CONCAT(s.name, '\r\n') AS SwimmerName, GROUP_CONCAT(s.age, '\r\n') AS Age, s.teamName as TeamName, s.seedTime AS SeedTime, e.eventName AS EventInfo FROM Swimmer s ";
-        //    commandText += "JOIN Heat h ON h.heatId = s.heatId ";
-        //    commandText += "JOIN Event e ON e.eventId = h.eventId ";
-        //    commandText += "GROUP BY e.eventNumber, h.heatNumber, s.laneNumber, s.teamName, s.seedTime ";
-        //    commandText += "ORDER BY eventNumber ASC, heatNumber ASC, laneNumber ASC;";
-
-        //    var heats = App.InMemoryConnection.Query<HeatInfo>(commandText, param: parameter).ToObservableCollection();
-
-        //    if (allEvents is null)
-        //    {
-        //        allEvents = new AllEvents(heats);
-        //    }
-        //    await Navigation.PushAsync(allEvents);
-        //}
-        //private async void OnGridItemTapped(object sender, ItemTappedEventArgs e)
-        //{
-        //    if ((sender as CollectionView).SelectedItem == null)
-        //        return;
-        //    var newSelectedItem = e.Item as EventGrid;
-
-        //    var parameter = new DynamicParameters();
-        //    parameter.Add("@eventNum", newSelectedItem.EventNum);
-        //    parameter.Add("@heatNum", newSelectedItem.HeatNum);
-
-        //    string commandText = "SELECT e.eventNumber AS EventNum, h.heatNumber AS HeatNum, s.laneNumber AS LaneNum, GROUP_CONCAT(s.name, '\r\n') AS SwimmerName, GROUP_CONCAT(s.age, '\r\n') AS Age, s.teamName as TeamName, s.seedTime AS SeedTime FROM Swimmer s ";
-        //    commandText += "JOIN Heat h ON h.heatId = s.heatId ";
-        //    commandText += "JOIN Event e ON e.eventId = h.eventId ";
-        //    commandText += "WHERE eventNum = @eventNum AND heatNum = @heatNum ";
-        //    commandText += "GROUP BY e.eventNumber, h.heatNumber, s.laneNumber, s.teamName, s.seedTime ";
-        //    commandText += "ORDER BY eventNumber ASC, heatNumber ASC, laneNumber ASC;";
-
-        //    var heats = App.InMemoryConnection.Query<HeatInfo>(commandText, param: parameter).ToList();
-
-        //    await Navigation.PushAsync(new HeatSheetInfo(heats));
-
-        //    EventList.SelectedItem = null;
         //}
     }
 }

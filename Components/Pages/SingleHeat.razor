@@ -1,0 +1,68 @@
+﻿@page "/singleheat/{EventNumber:int}/{HeatNumber:int}"
+@using HeatSheetHelperBlazor.Components.Shared
+@using HeatSheetHelperBlazor.Services
+
+<h3>Single Heat Details</h3>
+<h4>Event: @EventNumber Heat: @HeatNumber</h4>
+<h6>
+    @if (!string.IsNullOrEmpty(eventDetails))
+    {
+        <span>@eventDetails</span>
+    }
+</h6>
+<div><button @onclick="OnBackClicked" > Back </button></div>
+@if (heatInfo != null)
+{
+    <div class="heat-grid">
+        <table>
+            <thead>
+                <tr>
+                    <th>Lane</th>
+                    <th>Swimmer@("\n")Team</th>
+                    <th>Age</th>
+                    <th>Seed Time</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var lane in heatInfo.LaneInfos)
+            {
+                    <tr>
+                        <td>@lane.LaneNumber</td>
+                        <td><strong>@lane.SwimmerName</strong>@("\n")@lane.TeamName @lane.RelayTeamLetter</td>
+                        <td>@lane.SwimmerAge</td>
+                        <td>@lane.SeedTime</td>
+                    </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+        <p>No heat selected.</p>
+}
+@if (eventNumbers.Count > 0)
+{
+        <div style="display: flow; gap: 0.5em; margin-bottom: 1em;">
+            <select @onchange="OnEventNumberChanged" value="@selectedEventNumber">
+                <option value="">Select Event</option>
+            @foreach (var num in eventNumbers)
+            {
+                        <option value="@num">@num</option>
+            }
+            </select>
+            <select @onchange="OnHeatNumberChanged" value="@selectedHeatNumber" disabled="@(heatNumbers.Count == 0)">
+                <option value="">Select Heat</option>
+            @foreach (var num in heatNumbers)
+            {
+                        <option value="@num">@num</option>
+            }
+            </select>
+        <h6>
+        @if (heatsBetween.HasValue)
+        {
+                    <strong>Heats until event @EventNumber, heat @HeatNumber: @heatsBetween</strong>
+        }
+        </h6>
+        </div>
+}

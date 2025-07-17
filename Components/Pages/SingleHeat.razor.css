@@ -1,0 +1,56 @@
+﻿.heat-grid {
+    max-height: 70vh; /* or whatever height you want */
+    overflow-y: auto;
+    width: 100%;
+}
+
+    .heat-grid table {
+        width: 100%;
+        table-layout: auto;
+        background: #fff;
+    }
+
+    .heat-grid th,
+    .heat-grid td {
+        border: 1px solid #ccc;
+        padding: 0px;
+        text-align: left;
+        white-space: break-spaces;
+        word-break: break-word;
+        font-size: 0.8em;
+    }
+
+    .heat-grid th {
+        position: sticky;
+        top: 0;
+        background-color: var(--table-header-color, darkred);
+        color: white;
+        font-weight: bold;
+        z-index: 2;
+        box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+    }
+
+        .heat-grid th:nth-child(1),
+        .heat-grid td:nth-child(1), /* Lane */
+        .heat-grid th:nth-child(3),
+        .heat-grid td:nth-child(3) /* Age */ {
+            width: 4vw;
+            min-width: 35px;
+            max-width: 45px;
+            text-align: center;
+        }
+
+        .heat-grid th:nth-child(2),
+        .heat-grid td:nth-child(2) /* Swimmer/Team */ {
+        width: 30vw;
+        min-width: 200px;
+        max-width: 350px;
+        }
+
+        .heat-grid th:nth-child(4),
+        .heat-grid td:nth-child(4) /* Seed Time */ {
+            justify-content: right;
+            width: 10vw;
+            min-width: 60px;
+            max-width: 100px;
+        }

@@ -1,11 +1,4 @@
-﻿.eventHeader {
-    display: grid;
-    background-color: darkred;
-    outline-color: black;
-    outline-style: groove;
-    outline-width: 2px;
-}
-
+﻿/* Grid container for page layout */
 .grid {
     display: grid;
     background-color: white;
@@ -15,4 +8,62 @@
     border-bottom-color: white;
     border-style: groove;
     border-width: 3px;
+}
+
+/* Main table styling for all events */
+.all-events-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* Table header and cell styling */
+    .all-events-table th,
+    .all-events-table td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+        font-size: var(--table-font-size, 16px); /*0.8em;*/
+    }
+
+/* Table event header row, uses customizable color */
+.event-header {
+    background-color: var(--table-header-color, darkred); /* Uses CSS variable for user customization */
+    font-weight: bold;
+    font-size: var(--table-font-size, 16px); /*1.0em;*/
+    color: white;
+}
+
+/* Dropdown bar for event/heat selection, fixed at top */
+.event-selection-dropdown {
+    position: fixed;
+    z-index: 1000; /* Stays above other content */
+    background-color: white; /* Prevents content from showing through */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for separation */
+}
+
+/* Adds space at the top of the content to prevent overlap with fixed dropdown */
+.all-events-content {
+    padding-top: 60px; /* Adjust to match dropdown height */
+}
+
+/* Optional: Table with sticky headers for better scrolling UX */
+.sticky-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+/* Sticky table header styling */
+.sticky-table th {
+    position: sticky;
+    top: 0;
+    background: #fff; /* Can be changed to match header color */
+    z-index: 2;
+    box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+}
+
+/* Wrapper for sticky tables, adds spacing between tables */
+.sticky-table-wrapper {
+    position: relative;
+    margin-bottom: 2rem; /* Space between tables */
 }
