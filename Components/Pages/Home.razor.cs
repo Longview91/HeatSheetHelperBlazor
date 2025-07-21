@@ -17,13 +17,17 @@ namespace HeatSheetHelperBlazor.Components.Pages
         [Inject] public SwimmerListService SwimmerListService { get; set; }
         private ErrorModal ErrorModal = new();
         private List<SwimmerHeatRow> swimmerHeats = new();
-
+        private bool showFilterPanel = true;
         public string? SelectedSwimmer { get; private set; }
         [Inject] private NavigationManager Navigation { get; set; }
         [Inject] IJSRuntime JS { get; set; }
         private bool _restoredScroll = false;
         private Task SaveScrollPositionAsync() => StateClass.SaveAsync(JS, "homeScrollY");
         private Task RestoreScrollPositionAsync() => StateClass.RestoreAsync(JS, "homeScrollY");
+        private void ToggleFilterPanel()
+        {
+            showFilterPanel = !showFilterPanel;
+        }
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender && !_restoredScroll)
@@ -37,24 +41,6 @@ namespace HeatSheetHelperBlazor.Components.Pages
             await SaveScrollPositionAsync();
             Navigation.NavigateTo($"/singleheat/{eventNumber}/{heatNumber}");
         }
-        //private async Task SaveScrollPositionAsync()
-        //{
-        //    try
-        //    {
-        //        var scrollY = await JS.InvokeAsync<int>("getScrollY");
-        //        await JS.InvokeVoidAsync("localStorage.setItem", "homeScrollY", scrollY.ToString());
-        //    }
-        //    catch { }
-        //}
-        //private async Task RestoreScrollPositionAsync()
-        //{
-        //    try
-        //    {
-        //        var scrollY = await JS.InvokeAsync<int>("getStoredScrollY", "homeScrollY");
-        //        await JS.InvokeVoidAsync("window.scrollTo", 0, scrollY);
-        //    }
-        //    catch { }
-        //}
         private void OpenSingleHeat(int eventNumber, int heatNumber)
         {
             Navigation.NavigateTo($"/singleheat/{eventNumber}/{heatNumber}");
@@ -117,21 +103,6 @@ namespace HeatSheetHelperBlazor.Components.Pages
                 .ToList();
             });
         }
-
-        //private async Task SwimmerPicker_SelectedIndexChanged(ChangeEventArgs e)
-        //{
-        //    var selected = e.Value?.ToString();
-        //    SwimmerListService.SelectedSwimmer = selected;
-        //    if (!string.IsNullOrEmpty(selected))
-        //    {
-        //        await LoadSwimmerHeats(selected);
-        //    }
-        //    else
-        //    {
-        //        swimmerHeats.Clear();
-        //        StateHasChanged();
-        //    }
-        //}
         private async Task ToggleSwimmer(string swimmer)
         {
             if (SwimmerListService.SelectedSwimmers.Contains(swimmer))
@@ -142,7 +113,6 @@ namespace HeatSheetHelperBlazor.Components.Pages
             await LoadSwimmerHeatsForSelected();
             StateHasChanged();
         }
-
         private async Task LoadSwimmerHeatsForSelected()
         {
             var selected = SwimmerListService.SelectedSwimmers;
@@ -178,43 +148,6 @@ namespace HeatSheetHelperBlazor.Components.Pages
                     .ToList();
             });
         }
-        //private async Task LoadSwimmerHeats(string swimmerName)
-        //{
-        //    try
-        //    {
-        //        swimmerHeats = await Task.Run(() =>
-        //        {
-        //            if (MeetDataService.SwimMeet == null || MeetDataService.SwimMeet.SwimEvents == null)
-        //                return new List<SwimmerHeatRow>();
-
-        //            return MeetDataService.SwimMeet.SwimEvents
-        //                .SelectMany(ev => (ev.Heats ?? new List<HeatInfo>())
-        //                    .SelectMany(heat => (heat.LaneInfos ?? Enumerable.Empty<LaneInfo>())
-        //                        .Select(lane => new { ev, heat, lane })))
-        //                .Where(x => string.Equals(x.lane.SwimmerName, swimmerName, StringComparison.OrdinalIgnoreCase))
-        //                .Select(x => new SwimmerHeatRow
-        //                {
-        //                    EventNumber = x.ev.EventNumber,
-        //                    HeatNumber = x.heat.HeatNumber,
-        //                    LaneNumber = x.lane.LaneNumber,
-        //                    EventName = x.ev.EventDetails,
-        //                    StartTime = x.heat.StartTime,
-        //                    SeedTime = x.lane.SeedTime
-        //                })
-        //                .OrderBy(x => x.EventNumber)
-        //                .ThenBy(x => x.HeatNumber)
-        //                .ThenBy(x => x.LaneNumber)
-        //                .ToList();
-        //        });
-
-        //        StateHasChanged();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        ErrorModal.Show("Error", "An error was encountered when loading the swimmer heats: " + ex.Message);
-        //    }
-        //}
-
         protected override async Task OnInitializedAsync()
         {
             if (SwimmerListService.SelectedSwimmers != null && SwimmerListService.SelectedSwimmers.Count > 0)
@@ -222,12 +155,5 @@ namespace HeatSheetHelperBlazor.Components.Pages
                 await LoadSwimmerHeatsForSelected();
             }
         }
-        //protected override async Task OnParametersSetAsync()
-        //{
-        //    if (!string.IsNullOrEmpty(SwimmerListService.SelectedSwimmer))
-        //    {
-        //        await LoadSwimmerHeats(SwimmerListService.SelectedSwimmer);
-        //    }
-        //}
     }
 }
