@@ -49,38 +49,38 @@
         }
     }
     
-        @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
-        {
-            <div class="heats-grid @(showFilterPanel ? "" : "expanded-table")">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>E</th>
-                            <th>H</th>
-                            <th>L</th>
-                            <th>Event@("\n")Swimmer Name</th>
-                            <th>Start Time@("\n")Seed Time</th>
+    @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
+    {
+        <div class="heats-grid @(showFilterPanel ? "" : "expanded-table")">
+            <table>
+                <thead>
+                    <tr>
+                        <th>E</th>
+                        <th>H</th>
+                        <th>L</th>
+                        <th>Event@("\n")Swimmer Name</th>
+                        <th>Start Time@("\n")Seed Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var heat in swimmerHeats)
+                    {
+                        <tr @onclick="() => OpenSingleHeatAsync(heat.EventNumber, heat.HeatNumber)">
+                            <td>@heat.EventNumber</td>
+                            <td>@(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())</td>
+                            <td>@heat.LaneNumber</td>
+                            <td>@heat.EventName@("\n")<strong>@heat.SwimmerName</strong></td>
+                            <td>@heat.StartTime@("\n")<strong>@heat.SeedTime</strong></td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var heat in swimmerHeats)
-                        {
-                            <tr @onclick="() => OpenSingleHeatAsync(heat.EventNumber, heat.HeatNumber)">
-                                <td>@heat.EventNumber</td>
-                                <td>@(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())</td>
-                                <td>@heat.LaneNumber</td>
-                                <td>@heat.EventName@("\n")<strong>@heat.SwimmerName</strong></td>
-                                <td>@heat.StartTime@("\n")<strong>@heat.SeedTime</strong></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-        else
-        {
-            <div></div>
-        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div></div>
+    }
     
     <div style="display: flex; justify-content: center; align-items: center; margin-top: 24px; margin-bottom: 24px;">
         <button class="button-style" @onclick="OnPDFPickClicked" style="max-width: 170px">
