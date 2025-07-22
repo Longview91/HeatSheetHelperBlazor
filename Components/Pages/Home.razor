@@ -24,14 +24,49 @@
             </button>
             @if (@showFilterPanel)
             {
-                <input type="text"
-                    placeholder="Type to filter swimmers..."
-                    @bind="SwimmerListService.SwimmerFilter"
-                    @bind:event="oninput"
-                    style="width: 100%; max-width: 300px;" />
+                <div style="display: flex; align-items: center; width: 100%; max-width: 300px;">
+                    <input type="text"
+                           placeholder="Type to filter swimmers..."
+                           @bind="SwimmerListService.SwimmerFilter"
+                           @bind:event="oninput"
+                           style="flex: 1;" />
+                    <button @onmousedown="StartStarPress"
+                            @onmouseup="EndStarPress"
+                            @ontouchstart="StartStarPress"
+                            @ontouchend="EndStarPress"                         
+                            style="background: none; border: none; cursor: pointer; margin-left: 8px; padding: 0;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="@(showFavorites ? "gold" : "none")" stroke="gold" xmlns="http://www.w3.org/2000/svg">
+                            <polygon points="12,2 15,9 22,9 17,14 18,21 12,17 6,21 7,14 2,9 9,9" />
+                        </svg>
+                    </button>
+                </div>
             }
         </div>
-    
+
+        @if (showPopup)
+        {
+            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+                    <h3 class="text-lg font-semibold mb-4">Manage Favorites</h3>
+                    <p class="mb-4">Choose an action for your selected items:</p>
+                    <div class="flex flex-col gap-2">
+                        <button @onclick="AppendFavorites"
+                                class="p-2 bg-red-500 rounded hover:bg-red-600">
+                            Add to Favorites
+                        </button>
+                        <button @onclick="OverwriteFavorites"
+                                class="p-2 bg-red-500 rounded hover:bg-red-600">
+                            Overwrite Favorites
+                        </button>
+                        <button @onclick="ClosePopup"
+                                class="p-2 bg-gray-300 text-black rounded hover:bg-gray-400">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
         @if (@showFilterPanel)
         {
             <!-- Multi-select checkboxes -->

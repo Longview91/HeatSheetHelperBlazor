@@ -22,6 +22,13 @@ namespace HeatSheetHelperBlazor.Components.Pages
         [Inject] private NavigationManager Navigation { get; set; }
         [Inject] IJSRuntime JS { get; set; }
         private bool _restoredScroll = false;
+        private bool showFavorites = false;
+        private List<string> FavoriteSwimmers = new();
+        private System.Timers.Timer? starPressTimer;
+        private bool showPopup = false;
+        private DateTime touchStartTime = DateTime.MinValue;
+        private bool isTouching = false;
+        private const int LongPressThresholdMs = 800; // 800ms for long press
         private Task SaveScrollPositionAsync() => StateClass.SaveAsync(JS, "homeScrollY");
         private Task RestoreScrollPositionAsync() => StateClass.RestoreAsync(JS, "homeScrollY");
         private void ToggleFilterPanel()
@@ -150,9 +157,131 @@ namespace HeatSheetHelperBlazor.Components.Pages
         }
         protected override async Task OnInitializedAsync()
         {
+            try
+            {
+                await LoadFavoritesFromStorageAsync();
+            }
+            catch { }
             if (SwimmerListService.SelectedSwimmers != null && SwimmerListService.SelectedSwimmers.Count > 0)
             {
                 await LoadSwimmerHeatsForSelected();
+            }
+        }
+        private void StartStarPress()
+        {
+            if (touchStartTime != DateTime.MinValue) return;
+            touchStartTime = DateTime.Now;
+            isTouching = true;
+        }
+
+        private async Task EndStarPress()
+        {
+            if (!isTouching) return;
+            isTouching = false;
+
+            var touchDuration = (DateTime.Now - touchStartTime).TotalMilliseconds;
+
+            // Debounce with 100ms delay to stabilize touch handling
+            await Task.Delay(50);
+
+            if (touchDuration >= LongPressThresholdMs)
+            {
+                // Long press: show popup
+                showPopup = true;
+            }
+            else
+            {
+                // Short tap: toggle favorites
+                await ToggleFavorites();
+            }
+            touchStartTime = DateTime.MinValue;
+        }
+        //private void StartStarPress()
+        //{
+        //    starPressTimer = new System.Timers.Timer(800); // 800ms for long press
+        //    starPressTimer.Elapsed += async (s, e) =>
+        //    {
+        //        starPressTimer?.Stop();
+        //        showPopup = true;
+        //        //await SaveFavoritesToFileAsync();
+        //    };
+        //    starPressTimer.AutoReset = false;
+        //    starPressTimer.Start();
+        //}
+
+        //private void EndStarPress()
+        //{
+        //    if (starPressTimer != null && starPressTimer.Enabled)
+        //    {
+        //        starPressTimer.Stop();
+        //        ToggleFavorites();
+        //    }
+        //}
+        private async Task ToggleFavorites()
+        {
+            showFavorites = !showFavorites;
+
+            if (showFavorites && FavoriteSwimmers.Count > 0)
+            {
+                SwimmerListService.SelectedSwimmers.Clear();
+                foreach (var fav in FavoriteSwimmers)
+                {
+                    SwimmerListService.SelectedSwimmers.Add(fav);
+                }
+            }
+            else
+            {
+                SwimmerListService.SelectedSwimmers.Clear();
+            }
+            await LoadSwimmerHeatsForSelected();
+            StateHasChanged();
+        }
+        private async Task SaveFavoritesToFileAsync()
+        {
+            // Save the favorites list as a JSON string in localStorage
+            await JS.InvokeVoidAsync("localStorage.setItem", "favoriteSwimmers", System.Text.Json.JsonSerializer.Serialize(FavoriteSwimmers));
+            showPopup = false;
+            StateHasChanged();
+        }
+        private async Task AppendFavorites()
+        {
+            // Append selected items, excluding duplicates
+            foreach (var item in SwimmerListService.SelectedSwimmers)
+            {
+                if (!FavoriteSwimmers.Contains(item))
+                {
+                    FavoriteSwimmers.Add(item);
+                }
+            }
+            // Save updated favorites
+            await SaveFavoritesToFileAsync();
+        }
+        private async Task OverwriteFavorites()
+        {
+            // Copy currently checked swimmers to favorites
+            FavoriteSwimmers = SwimmerListService.SelectedSwimmers.ToList();
+            await SaveFavoritesToFileAsync();
+        }
+        private void ClosePopup()
+        {
+            showPopup = false;
+            StateHasChanged();
+        }
+        private async Task LoadFavoritesFromStorageAsync()
+        {
+            var json = await JS.InvokeAsync<string>("localStorage.getItem", "favoriteSwimmers");
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                try
+                {
+                    var loaded = System.Text.Json.JsonSerializer.Deserialize<List<string>>(json);
+                    if (loaded != null)
+                        FavoriteSwimmers = loaded;
+                }
+                catch
+                {
+                    FavoriteSwimmers = new List<string>();
+                }
             }
         }
     }
