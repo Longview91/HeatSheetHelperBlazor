@@ -9,6 +9,12 @@
 <!-- height should not exceed 84 so that there is never a scroll bar for the main page-->
 <div style="display: flex; flex-direction: column; height: 84vh;">
 
+    @if (@loading)
+    {
+        <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+            <div class="spinner"></div>
+        </div>
+    }
     @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
     {
         <div style="display: flex; align-items: center; margin-bottom: 8px;">

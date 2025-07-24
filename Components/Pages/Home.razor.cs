@@ -15,14 +15,16 @@ namespace HeatSheetHelperBlazor.Components.Pages
     {
         [Inject] public MeetDataService MeetDataService { get; set; }
         [Inject] public SwimmerListService SwimmerListService { get; set; }
+        [Inject] private NavigationManager Navigation { get; set; }
+        [Inject] IJSRuntime JS { get; set; }
+        [Inject] private IDispatcher Dispatcher { get; set; }
         private ErrorModal ErrorModal = new();
         private List<SwimmerHeatRow> swimmerHeats = new();
         private bool showFilterPanel = true;
         public string? SelectedSwimmer { get; private set; }
-        [Inject] private NavigationManager Navigation { get; set; }
-        [Inject] IJSRuntime JS { get; set; }
         private bool _restoredScroll = false;
         private bool showFavorites = false;
+        private bool loading = false;
         private List<string> FavoriteSwimmers = new();
         private System.Timers.Timer? starPressTimer;
         private bool showPopup = false;
@@ -76,12 +78,18 @@ namespace HeatSheetHelperBlazor.Components.Pages
                     heatSheet.AddRange(Regex.Split(pdfText, "\n").ToList());
                 }
 
-                var swimMeet = SwimmerFunctions.ParseHeatSheetToEvents(heatSheet);
-                MeetDataService.SwimMeet = swimMeet;
+                loading = true;
+                StateHasChanged();
 
-                //SwimmerFunctions.FillEmptyTimes();
+                await Task.Run(async () =>
+                {
+                    var swimMeet = SwimmerFunctions.ParseHeatSheetToEvents(heatSheet);
+                    MeetDataService.SwimMeet = swimMeet;
+                    await PopulateSwimmerNameList();
+                    await Dispatcher.DispatchAsync(() => StateHasChanged());
+                });
 
-                await PopulateSwimmerNameList();
+                loading = false;
 
                 // Reset scroll position and stored scroll value
                 await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
