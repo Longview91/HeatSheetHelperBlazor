@@ -199,6 +199,8 @@ namespace HeatSheetHelper.Helpers
                 events.Add(currentEvent);
 
             swimMeet.SwimEvents = events;
+            FillMissingHeatStartTimes(swimMeet);
+
             return swimMeet;
         }
 
@@ -270,6 +272,80 @@ namespace HeatSheetHelper.Helpers
         {
             line = Regex.Replace(line.ToUpper(), @"Β", "F"); //@"[^\d\s\w,:\-.'\/\!\@\#\$\%\^\&\*\(\)]", "?");
             return line.Replace("BUTTERBLY", "BUTTERFLY");
-        } 
+        }
+        internal static void FillMissingHeatStartTimes(SwimMeet swimMeet)
+        {
+            foreach (var swimEvent in swimMeet.SwimEvents)
+            {
+                var heats = swimEvent.Heats;
+                for (int i = 0; i < heats.Count; i++)
+                {
+                    var heat = heats[i];
+                    if (string.IsNullOrWhiteSpace(heat.StartTime))
+                    {
+                        // Find previous heat with a time
+                        int prevIdx = i - 1;
+                        string prevTime = null;
+                        while (prevIdx >= 0)
+                        {
+                            if (!string.IsNullOrWhiteSpace(heats[prevIdx].StartTime))
+                            {
+                                prevTime = heats[prevIdx].StartTime;
+                                break;
+                            }
+                            prevIdx--;
+                        }
+
+                        // Find next heat with a time
+                        int nextIdx = i + 1;
+                        string nextTime = null;
+                        while (nextIdx < heats.Count)
+                        {
+                            if (!string.IsNullOrWhiteSpace(heats[nextIdx].StartTime))
+                            {
+                                nextTime = heats[nextIdx].StartTime;
+                                break;
+                            }
+                            nextIdx++;
+                        }
+
+                        // Calculate midpoint time
+                        if (prevTime != null && nextTime != null)
+                        {
+                            if (TryParseTime(prevTime, out var prevDt) && TryParseTime(nextTime, out var nextDt))
+                            {
+                                // Handle day wrap-around if needed
+                                if (nextDt < prevDt)
+                                    nextDt = nextDt.AddDays(1);
+
+                                var midTicks = prevDt.Ticks + (nextDt.Ticks - prevDt.Ticks) / 2;
+                                var midTime = new DateTime(midTicks);
+                                heat.StartTime = midTime.ToString("h:mm tt");
+                            }
+                        }
+                        else if (prevTime != null && TryParseTime(prevTime, out var prevDtOnly))
+                        {
+                            heat.StartTime = prevDtOnly.ToString("h:mm tt");
+                        }
+                        else if (nextTime != null && TryParseTime(nextTime, out var nextDtOnly))
+                        {
+                            heat.StartTime = nextDtOnly.ToString("h:mm tt");
+                        }
+                        // else leave blank
+                    }
+                }
+            }
+        }
+        // Helper to parse "h:mm AM/PM" to DateTime (date part is ignored)
+        private static bool TryParseTime(string time, out DateTime dt)
+        {
+            return DateTime.TryParseExact(
+                time.Trim(),
+                new[] { "h:mm tt", "hh:mm tt", "h:mmtt", "hh:mmtt" },
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None,
+                out dt
+            );
+        }
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace HeatSheetHelperBlazor.Models
 {
-    internal class SwimmerHeatRow
+    public class SwimmerHeatRow
     {
         public int EventNumber { get; set; }
         public int HeatNumber { get; set; }
