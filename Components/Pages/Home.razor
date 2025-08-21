@@ -1,36 +1,98 @@
 ﻿@page "/"
-@using HeatSheetHelperBlazor.Models
-@using HeatSheetHelper.Helpers
+@using HeatSheetHelper.Core.Models
+@using HeatSheetHelper.Core.Helpers
 
 <PageTitle>Heat Sheet Helper</PageTitle>
 
 <h3>Heat Sheet Helper</h3>
-    @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
-    {
-        <!-- TextBox -->
-        <input type="text"
-        placeholder="Type to filter swimmers..."
-        @bind="SwimmerListService.SwimmerFilter"
-        @bind:event="oninput"
-        style="margin-bottom: 8px; width: 100%; max-width: 300px;" />
 
-        <!-- Multi-select checkboxes -->
-        <div style="max-height: 100px; overflow-y: auto; border: 1px solid #ccc; padding: 4px; margin-bottom: 8px;">
-            @foreach (var swimmer in SwimmerListService.FilteredSwimmerNames)
-            {
-                <label style="display: block;">
-                    <input type="checkbox"
-                    checked="@SwimmerListService.SelectedSwimmers.Contains(swimmer)"
-                    @onchange="() => ToggleSwimmer(swimmer)" />
-                    @swimmer
-                </label>
-            }
+<!-- height should not exceed 84 so that there is never a scroll bar for the main page-->
+<div style="display: flex; flex-direction: column; height: 84vh;">
+
+    @if (@loading)
+    {
+        <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+            <div class="spinner"></div>
         </div>
     }
-
     @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
     {
-        <div class="heats-grid">
+        <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <!-- Chevron Toggle Button -->
+            <button @onclick="ToggleFilterPanel"
+                    style="background: none; border: none; cursor: pointer; margin-right: 8px; padding: 0;">
+                <span style="display: inline-block; transition: transform 0.2s;
+                transform: rotate(@(showFilterPanel ? "180deg" : "90deg"));">
+                    <svg width="24" height="16" viewBox="0 0 32 24" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+                        <polyline points="2,22 16,6 30,22" style="fill:none;stroke:var(--table-header-color, black);stroke-width:6" />
+                    </svg>
+                </span>
+            </button>
+            @if (@showFilterPanel)
+            {
+                <div style="display: flex; align-items: center; width: 100%; max-width: 300px;">
+                    <input type="text"
+                           placeholder="Type to filter swimmers..."
+                           @bind="SwimmerListService.SwimmerFilter"
+                           @bind:event="oninput"
+                           style="flex: 1;" />
+                    <button @onmousedown="StartStarPress"
+                            @onmouseup="EndStarPress"
+                            @ontouchstart="StartStarPress"
+                            @ontouchend="EndStarPress"                         
+                            style="background: none; border: none; cursor: pointer; margin-left: 8px; padding: 0;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="@(showFavorites ? "gold" : "none")" stroke="gold" xmlns="http://www.w3.org/2000/svg">
+                            <polygon points="12,2 15,9 22,9 17,14 18,21 12,17 6,21 7,14 2,9 9,9" />
+                        </svg>
+                    </button>
+                </div>
+            }
+        </div>
+
+        @if (showPopup)
+        {
+            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+                    <h3 class="text-lg font-semibold mb-4">Manage Favorites</h3>
+                    <p class="mb-4">Choose an action for your selected items:</p>
+                    <div class="flex flex-col gap-2">
+                        <button @onclick="AppendFavorites"
+                                class="p-2 bg-red-500 rounded hover:bg-red-600">
+                            Add to Favorites
+                        </button>
+                        <button @onclick="OverwriteFavorites"
+                                class="p-2 bg-red-500 rounded hover:bg-red-600">
+                            Overwrite Favorites
+                        </button>
+                        <button @onclick="ClosePopup"
+                                class="p-2 bg-gray-300 text-black rounded hover:bg-gray-400">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (@showFilterPanel)
+        {
+            <!-- Multi-select checkboxes -->
+            <div style="max-height: 100px; overflow-y: auto; border: 1px solid #ccc; padding: 4px; margin-bottom: 8px;">
+                @foreach (var swimmer in SwimmerListService.FilteredSwimmerNames)
+                {
+                    <label style="display: block;">
+                        <input type="checkbox"
+                        checked="@SwimmerListService.SelectedSwimmers.Contains(swimmer)"
+                        @onchange="() => ToggleSwimmer(swimmer)" />
+                        @swimmer
+                    </label>
+                }
+            </div>
+        }
+    }
+    
+    @if (MeetDataService.SwimMeet.SwimEvents.Count > 0)
+    {
+        <div class="heats-grid @(showFilterPanel ? "" : "expanded-table")">
             <table>
                 <thead>
                     <tr>
@@ -60,11 +122,12 @@
     {
         <div></div>
     }
-
-<div style="display: flex; justify-content: center; align-items: center; margin-top: 24px; margin-bottom: 24px;">
-    <button class="button-style" @onclick="OnPDFPickClicked" style="max-width: 170px;">
-        @(MeetDataService.SwimMeet.SwimEvents.Count == 0
-        ? "Choose a Heat Sheet"
-        : "Choose a different Heat Sheet")
-    </button>
+    
+    <div style="display: flex; justify-content: center; align-items: center; margin-top: 24px; margin-bottom: 24px;">
+        <button class="button-style" @onclick="OnPDFPickClicked" style="max-width: 170px">
+            @(MeetDataService.SwimMeet.SwimEvents.Count == 0
+            ? "Choose a Heat Sheet"
+            : "Choose a different Heat Sheet")
+        </button>
+    </div>
 </div>

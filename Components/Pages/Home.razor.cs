@@ -1,13 +1,14 @@
 ﻿using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using System.Text.RegularExpressions;
-using HeatSheetHelper.Helpers;
 using Microsoft.AspNetCore.Components;
-using HeatSheetHelperBlazor.Components.Shared;
-using HeatSheetHelperBlazor.Models;
 using HeatSheetHelperBlazor.Services;
 using HeatSheetHelperBlazor.Helpers;
 using Microsoft.JSInterop;
+using HeatSheetHelper.Core.Helpers;
+using HeatSheetHelper.Core.Models;
+using HeatSheetHelper.Core.Shared;
+using HeatSheetHelper.Core.Interfaces;
 
 namespace HeatSheetHelperBlazor.Components.Pages
 {
@@ -15,15 +16,29 @@ namespace HeatSheetHelperBlazor.Components.Pages
     {
         [Inject] public MeetDataService MeetDataService { get; set; }
         [Inject] public SwimmerListService SwimmerListService { get; set; }
-        private ErrorModal ErrorModal = new();
-        private List<SwimmerHeatRow> swimmerHeats = new();
-
-        public string? SelectedSwimmer { get; private set; }
+        [Inject] public ISwimmerFunctions SwimmerFunctions { get; set; }
         [Inject] private NavigationManager Navigation { get; set; }
         [Inject] IJSRuntime JS { get; set; }
+        [Inject] private IDispatcher Dispatcher { get; set; }
+        private ErrorModal ErrorModal = new();
+        private List<SwimmerHeatRow> swimmerHeats = new();
+        private bool showFilterPanel = true;
+        public string? SelectedSwimmer { get; private set; }
         private bool _restoredScroll = false;
+        private bool showFavorites = false;
+        private bool loading = false;
+        private List<string> FavoriteSwimmers = new();
+        private System.Timers.Timer? starPressTimer;
+        private bool showPopup = false;
+        private DateTime touchStartTime = DateTime.MinValue;
+        private bool isTouching = false;
+        private const int LongPressThresholdMs = 800; // 800ms for long press
         private Task SaveScrollPositionAsync() => StateClass.SaveAsync(JS, "homeScrollY");
         private Task RestoreScrollPositionAsync() => StateClass.RestoreAsync(JS, "homeScrollY");
+        private void ToggleFilterPanel()
+        {
+            showFilterPanel = !showFilterPanel;
+        }
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender && !_restoredScroll)
@@ -37,24 +52,6 @@ namespace HeatSheetHelperBlazor.Components.Pages
             await SaveScrollPositionAsync();
             Navigation.NavigateTo($"/singleheat/{eventNumber}/{heatNumber}");
         }
-        //private async Task SaveScrollPositionAsync()
-        //{
-        //    try
-        //    {
-        //        var scrollY = await JS.InvokeAsync<int>("getScrollY");
-        //        await JS.InvokeVoidAsync("localStorage.setItem", "homeScrollY", scrollY.ToString());
-        //    }
-        //    catch { }
-        //}
-        //private async Task RestoreScrollPositionAsync()
-        //{
-        //    try
-        //    {
-        //        var scrollY = await JS.InvokeAsync<int>("getStoredScrollY", "homeScrollY");
-        //        await JS.InvokeVoidAsync("window.scrollTo", 0, scrollY);
-        //    }
-        //    catch { }
-        //}
         private void OpenSingleHeat(int eventNumber, int heatNumber)
         {
             Navigation.NavigateTo($"/singleheat/{eventNumber}/{heatNumber}");
@@ -83,12 +80,18 @@ namespace HeatSheetHelperBlazor.Components.Pages
                     heatSheet.AddRange(Regex.Split(pdfText, "\n").ToList());
                 }
 
-                var swimMeet = SwimmerFunctions.ParseHeatSheetToEvents(heatSheet);
-                MeetDataService.SwimMeet = swimMeet;
+                loading = true;
+                StateHasChanged();
 
-                //SwimmerFunctions.FillEmptyTimes();
+                await Task.Run(async () =>
+                {
+                    var swimMeet = SwimmerFunctions.ParseHeatSheetToEvents(heatSheet);
+                    MeetDataService.SwimMeet = swimMeet;
+                    await PopulateSwimmerNameList();
+                    await Dispatcher.DispatchAsync(() => StateHasChanged());
+                });
 
-                await PopulateSwimmerNameList();
+                loading = false;
 
                 // Reset scroll position and stored scroll value
                 await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
@@ -117,21 +120,6 @@ namespace HeatSheetHelperBlazor.Components.Pages
                 .ToList();
             });
         }
-
-        //private async Task SwimmerPicker_SelectedIndexChanged(ChangeEventArgs e)
-        //{
-        //    var selected = e.Value?.ToString();
-        //    SwimmerListService.SelectedSwimmer = selected;
-        //    if (!string.IsNullOrEmpty(selected))
-        //    {
-        //        await LoadSwimmerHeats(selected);
-        //    }
-        //    else
-        //    {
-        //        swimmerHeats.Clear();
-        //        StateHasChanged();
-        //    }
-        //}
         private async Task ToggleSwimmer(string swimmer)
         {
             if (SwimmerListService.SelectedSwimmers.Contains(swimmer))
@@ -142,7 +130,6 @@ namespace HeatSheetHelperBlazor.Components.Pages
             await LoadSwimmerHeatsForSelected();
             StateHasChanged();
         }
-
         private async Task LoadSwimmerHeatsForSelected()
         {
             var selected = SwimmerListService.SelectedSwimmers;
@@ -178,56 +165,134 @@ namespace HeatSheetHelperBlazor.Components.Pages
                     .ToList();
             });
         }
-        //private async Task LoadSwimmerHeats(string swimmerName)
-        //{
-        //    try
-        //    {
-        //        swimmerHeats = await Task.Run(() =>
-        //        {
-        //            if (MeetDataService.SwimMeet == null || MeetDataService.SwimMeet.SwimEvents == null)
-        //                return new List<SwimmerHeatRow>();
-
-        //            return MeetDataService.SwimMeet.SwimEvents
-        //                .SelectMany(ev => (ev.Heats ?? new List<HeatInfo>())
-        //                    .SelectMany(heat => (heat.LaneInfos ?? Enumerable.Empty<LaneInfo>())
-        //                        .Select(lane => new { ev, heat, lane })))
-        //                .Where(x => string.Equals(x.lane.SwimmerName, swimmerName, StringComparison.OrdinalIgnoreCase))
-        //                .Select(x => new SwimmerHeatRow
-        //                {
-        //                    EventNumber = x.ev.EventNumber,
-        //                    HeatNumber = x.heat.HeatNumber,
-        //                    LaneNumber = x.lane.LaneNumber,
-        //                    EventName = x.ev.EventDetails,
-        //                    StartTime = x.heat.StartTime,
-        //                    SeedTime = x.lane.SeedTime
-        //                })
-        //                .OrderBy(x => x.EventNumber)
-        //                .ThenBy(x => x.HeatNumber)
-        //                .ThenBy(x => x.LaneNumber)
-        //                .ToList();
-        //        });
-
-        //        StateHasChanged();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        ErrorModal.Show("Error", "An error was encountered when loading the swimmer heats: " + ex.Message);
-        //    }
-        //}
-
         protected override async Task OnInitializedAsync()
         {
+            try
+            {
+                await LoadFavoritesFromStorageAsync();
+            }
+            catch { }
             if (SwimmerListService.SelectedSwimmers != null && SwimmerListService.SelectedSwimmers.Count > 0)
             {
                 await LoadSwimmerHeatsForSelected();
             }
         }
-        //protected override async Task OnParametersSetAsync()
+        private void StartStarPress()
+        {
+            if (touchStartTime != DateTime.MinValue) return;
+            touchStartTime = DateTime.Now;
+            isTouching = true;
+        }
+
+        private async Task EndStarPress()
+        {
+            if (!isTouching) return;
+            isTouching = false;
+
+            var touchDuration = (DateTime.Now - touchStartTime).TotalMilliseconds;
+
+            // Debounce with 100ms delay to stabilize touch handling
+            await Task.Delay(50);
+
+            if (touchDuration >= LongPressThresholdMs)
+            {
+                // Long press: show popup
+                showPopup = true;
+            }
+            else
+            {
+                // Short tap: toggle favorites
+                await ToggleFavorites();
+            }
+            touchStartTime = DateTime.MinValue;
+        }
+        //private void StartStarPress()
         //{
-        //    if (!string.IsNullOrEmpty(SwimmerListService.SelectedSwimmer))
+        //    starPressTimer = new System.Timers.Timer(800); // 800ms for long press
+        //    starPressTimer.Elapsed += async (s, e) =>
         //    {
-        //        await LoadSwimmerHeats(SwimmerListService.SelectedSwimmer);
+        //        starPressTimer?.Stop();
+        //        showPopup = true;
+        //        //await SaveFavoritesToFileAsync();
+        //    };
+        //    starPressTimer.AutoReset = false;
+        //    starPressTimer.Start();
+        //}
+
+        //private void EndStarPress()
+        //{
+        //    if (starPressTimer != null && starPressTimer.Enabled)
+        //    {
+        //        starPressTimer.Stop();
+        //        ToggleFavorites();
         //    }
         //}
+        private async Task ToggleFavorites()
+        {
+            showFavorites = !showFavorites;
+
+            if (showFavorites && FavoriteSwimmers.Count > 0)
+            {
+                SwimmerListService.SelectedSwimmers.Clear();
+                foreach (var fav in FavoriteSwimmers)
+                {
+                    SwimmerListService.SelectedSwimmers.Add(fav);
+                }
+            }
+            else
+            {
+                SwimmerListService.SelectedSwimmers.Clear();
+            }
+            await LoadSwimmerHeatsForSelected();
+            StateHasChanged();
+        }
+        private async Task SaveFavoritesToFileAsync()
+        {
+            // Save the favorites list as a JSON string in localStorage
+            await JS.InvokeVoidAsync("localStorage.setItem", "favoriteSwimmers", System.Text.Json.JsonSerializer.Serialize(FavoriteSwimmers));
+            showPopup = false;
+            StateHasChanged();
+        }
+        private async Task AppendFavorites()
+        {
+            // Append selected items, excluding duplicates
+            foreach (var item in SwimmerListService.SelectedSwimmers)
+            {
+                if (!FavoriteSwimmers.Contains(item))
+                {
+                    FavoriteSwimmers.Add(item);
+                }
+            }
+            // Save updated favorites
+            await SaveFavoritesToFileAsync();
+        }
+        private async Task OverwriteFavorites()
+        {
+            // Copy currently checked swimmers to favorites
+            FavoriteSwimmers = SwimmerListService.SelectedSwimmers.ToList();
+            await SaveFavoritesToFileAsync();
+        }
+        private void ClosePopup()
+        {
+            showPopup = false;
+            StateHasChanged();
+        }
+        private async Task LoadFavoritesFromStorageAsync()
+        {
+            var json = await JS.InvokeAsync<string>("localStorage.getItem", "favoriteSwimmers");
+            if (!string.IsNullOrWhiteSpace(json))
+            {
+                try
+                {
+                    var loaded = System.Text.Json.JsonSerializer.Deserialize<List<string>>(json);
+                    if (loaded != null)
+                        FavoriteSwimmers = loaded;
+                }
+                catch
+                {
+                    FavoriteSwimmers = new List<string>();
+                }
+            }
+        }
     }
 }

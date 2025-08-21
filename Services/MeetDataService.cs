@@ -1,4 +1,4 @@
-﻿using HeatSheetHelperBlazor.Components.Shared;
+﻿using HeatSheetHelper.Core.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;

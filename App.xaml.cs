@@ -1,4 +1,4 @@
-﻿using HeatSheetHelper.Helpers;
+﻿using HeatSheetHelper.Core.Helpers;
 
 namespace HeatSheetHelperBlazor
 {

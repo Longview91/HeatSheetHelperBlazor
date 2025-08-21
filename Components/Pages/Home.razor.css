@@ -4,8 +4,9 @@
     line-height: 1;
 }
 
-.heats-grid {
-    max-height: 50vh; /* or whatever height you want */
+.heats-grid,
+.expanded-table {
+    min-height: 0; /* Allow flex child to shrink */
     overflow-y: auto;
 }
 
