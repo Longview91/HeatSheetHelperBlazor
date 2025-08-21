@@ -1,4 +1,6 @@
-﻿using HeatSheetHelperBlazor.Services;
+﻿using HeatSheetHelper.Core.Interfaces;
+using HeatSheetHelper.Core.Helpers;
+using HeatSheetHelperBlazor.Services;
 using Microsoft.Extensions.Logging;
 
 namespace HeatSheetHelperBlazor;
@@ -18,6 +20,7 @@ public static class MauiProgram
         builder.Services.AddMauiBlazorWebView();
 		builder.Services.AddSingleton<MeetDataService>();
 		builder.Services.AddSingleton<SwimmerListService>();
+		builder.Services.AddSingleton<ISwimmerFunctions, SwimmerFunctions>();
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
 		builder.Logging.AddDebug();

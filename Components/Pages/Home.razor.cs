@@ -1,13 +1,14 @@
 ﻿using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using System.Text.RegularExpressions;
-using HeatSheetHelper.Helpers;
 using Microsoft.AspNetCore.Components;
-using HeatSheetHelperBlazor.Components.Shared;
-using HeatSheetHelperBlazor.Models;
 using HeatSheetHelperBlazor.Services;
 using HeatSheetHelperBlazor.Helpers;
 using Microsoft.JSInterop;
+using HeatSheetHelper.Core.Helpers;
+using HeatSheetHelper.Core.Models;
+using HeatSheetHelper.Core.Shared;
+using HeatSheetHelper.Core.Interfaces;
 
 namespace HeatSheetHelperBlazor.Components.Pages
 {
@@ -15,6 +16,7 @@ namespace HeatSheetHelperBlazor.Components.Pages
     {
         [Inject] public MeetDataService MeetDataService { get; set; }
         [Inject] public SwimmerListService SwimmerListService { get; set; }
+        [Inject] public ISwimmerFunctions SwimmerFunctions { get; set; }
         [Inject] private NavigationManager Navigation { get; set; }
         [Inject] IJSRuntime JS { get; set; }
         [Inject] private IDispatcher Dispatcher { get; set; }

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Components;
-using HeatSheetHelperBlazor.Components.Shared;
 using HeatSheetHelperBlazor.Services;
 using Microsoft.JSInterop;
+using HeatSheetHelper.Core.Shared;
 
 namespace HeatSheetHelperBlazor.Components.Pages
 {
