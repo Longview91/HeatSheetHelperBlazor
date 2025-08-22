@@ -10,29 +10,37 @@
     border-width: 3px;
 }
 
-/* Main table styling for all events */
+/* Secondary table styling for all events */
 .all-events-table {
     width: 100%;
     border-collapse: collapse;
 }
-
-/* Table header and cell styling */
+    
+    /* Table header and cell styling */
     .all-events-table th,
     .all-events-table td {
         border: 1px solid #ccc;
-        padding: 8px;
-        text-align: left;
+        padding: 0px;
         font-size: var(--table-font-size, 16px); /*0.8em;*/
     }
 
-/* Table event header row, uses customizable color */
-.event-header {
-    background-color: var(--table-header-color, darkred); /* Uses CSS variable for user customization */
-    font-weight: bold;
-    font-size: var(--table-font-size, 16px); /*1.0em;*/
-    color: white;
-}
+        .all-events-table th:nth-child(1),
+        .all-events-table td:nth-child(1),
+        .all-events-table th:nth-child(3),
+        .all-events-table td:nth-child(3) {
+            width: 4vw;
+            min-width: 23px;
+            max-width: 45px;
+            text-align: center
+        }
 
+        .all-events-table th:nth-child(4),
+        .all-events-table td:nth-child(4) {
+            width: 10vw;
+            min-width: 60px;
+            max-width: 100px;
+            text-align: center;
+        }
 /* Dropdown bar for event/heat selection, fixed at top */
 .event-selection-dropdown {
     position: fixed;
@@ -67,3 +75,19 @@
     position: relative;
     margin-bottom: 2rem; /* Space between tables */
 }
+
+.all-events-maintable {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--table-header-color, darkred); /* Uses CSS variable for user customization */
+    font-weight: bold;
+    font-size: var(--table-font-size, 16px); /*1.0em;*/
+    color: white;
+}
+
+    .all-events-maintable th:nth-child(1) {
+        text-align: left;
+        padding: 8px;
+    }
+
+

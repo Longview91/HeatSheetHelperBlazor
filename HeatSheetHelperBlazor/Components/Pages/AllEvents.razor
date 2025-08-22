@@ -48,10 +48,10 @@
 
                 if (filteredLanes.Any())
                 {
-                    <table class="table all-events-table" id="event-@swimEvent.EventNumber-heat-@heat.HeatNumber">
+                    <table class="all-events-table" id="event-@swimEvent.EventNumber-heat-@heat.HeatNumber">
                         <thead>
-                            <tr>
-                                <th colspan="5" class="event-header">
+                            <tr class="all-events-maintable">
+                                <th colspan="5">
                                     Event @swimEvent.EventNumber: @swimEvent.EventDetails
                                     | Heat @(heat.HeatNumber == 100 ? "Sign-in Event" : heat.HeatNumber.ToString())
                                     | at @heat.StartTime

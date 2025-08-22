@@ -27,28 +27,12 @@ namespace HeatSheetHelper.Core.Helpers
             {
                 string line = CleanseTheData(dirtyLine);
 
-                // Event line
-                if (line.StartsWith('#') || line.StartsWith("EVENT"))
-                {
-                    _context.TransitionTo(new EventState());
-                }
-                // Heat line
-                else if (Regex.Match(line, @"\bHEAT\s+(\d+)").Success)
-                {
-                    _context.TransitionTo(new HeatState());
-                }
-                // Lane/Swimmer line (individual)
-                else if (Regex.Match(line, RegexExpressions.singleSwimmerPatternMain).Success)
-                {
-                    _context.TransitionTo(new LanePattern1State());
-                }
-                // Lane/Swimmer line (secondary pattern)
-                else if (Regex.Match(line, RegexExpressions.singleSwimmerPatternSecondary).Success)
-                {
-                    _context.TransitionTo(new LanePattern2State());
-                }
+                // This will return as SkipLineState if the line is not relevant and we can use that to determine if we should
+                // check for relay patterns or not
+                _context.TransitionTo(new StateFactory().CreateState(line));
+                
                 // Relay team line
-                else if (Regex.Match(line, RegexExpressions.relayTeamPattern).Success)
+                if (_context.GetCurrentState() is SkipLineState && Regex.Match(line, RegexExpressions.relayTeamPattern).Success)
                 {
                     var match = Regex.Match(line, RegexExpressions.relayTeamPattern);
                     currentRelaySeedTime = match.Groups["seedTime"].Value.Trim();
@@ -58,18 +42,10 @@ namespace HeatSheetHelper.Core.Helpers
                     _context.TransitionTo(new SkipLineState());
                 }
                 // Relay swimmer line
-                else if (Regex.Match(line, RegexExpressions.relaySwimmerPattern).Success)
+                else if (_context.GetCurrentState() is SkipLineState && Regex.Match(line, RegexExpressions.relaySwimmerPattern).Success)
                 {
                     ParseRelaySwimmers(line, currentHeat, currentRelayLane, currentRelayTeamName, currentRelayTeamLetter, currentRelaySeedTime, RegexExpressions.relaySwimmerPattern);
                     _context.TransitionTo(new SkipLineState());
-                }
-                else { 
-                    // If no specific pattern matches, we can skip the line or handle it as needed
-                    if (_context.GetCurrentState() is not SkipLineState)
-                    {
-                        // If not in SkipLineState, change to SkipLineState
-                        _context.TransitionTo(new SkipLineState());
-                    }
                 }
                 _context.GetCurrentState().HandleLine(line, ref currentEvent, ref currentHeat, ref events);
             }
