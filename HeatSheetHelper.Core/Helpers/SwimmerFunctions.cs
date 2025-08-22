@@ -1,12 +1,17 @@
 ﻿using HeatSheetHelper.Core.Constants;
 using HeatSheetHelper.Core.Interfaces;
 using HeatSheetHelper.Core.Shared;
+using HeatSheetHelper.Core.Helpers;
+using HeatSheetHelper.Core.States;
 using System.Text.RegularExpressions;
+using System.Security.Cryptography;
 
 namespace HeatSheetHelper.Core.Helpers
 {
     public class SwimmerFunctions : ISwimmerFunctions
     {
+        private StateContext _context = new StateContext(new SkipLineState()); // Context to manage state transitions
+
         public SwimMeet ParseHeatSheetToEvents(List<string> heatSheet)
         {
             SwimMeet swimMeet = new();
@@ -25,150 +30,22 @@ namespace HeatSheetHelper.Core.Helpers
                 // Event line
                 if (line.StartsWith('#') || line.StartsWith("EVENT"))
                 {
-                    // Save previous event if exists
-                    if (currentEvent != null)
-                    {
-                        // Save any pending heat to the previous event
-                        if (currentHeat != null && currentHeat.HeatNumber != 100)
-                        {
-                            currentEvent.Heats.Add(currentHeat);
-                            currentHeat = null;
-                        }
-                        events.Add(currentEvent);
-                    }
-
-                    // Parse event number and details
-                    int eventNumber = 0;
-                    string eventDetails = "";
-                    var match = Regex.Match(line, @"(\d+)\s*(.*)");
-                    if (match.Success)
-                    {
-                        eventNumber = int.Parse(match.Groups[1].Value);
-                        eventDetails = match.Groups[2].Value.Trim();
-                    }
-
-                    currentEvent = new SwimEvent
-                    {
-                        EventNumber = eventNumber,
-                        EventDetails = eventDetails,
-                        Heats = new List<HeatInfo>()
-                    };
-                    currentHeat = null;
-                    if (line.Contains("RELAY"))
-                    {
-                        currentEvent.IsRelay = true;
-                    }
+                    _context.TransitionTo(new EventState());
                 }
                 // Heat line
                 else if (Regex.Match(line, @"\bHEAT\s+(\d+)").Success)
                 {
-                    // Save previous heat if exists
-                    if (currentHeat != null && currentHeat.HeatNumber != 100 && currentEvent != null)
-                    {
-                        currentEvent.Heats.Add(currentHeat);
-                        currentHeat = null;
-                    }
-
-                    // Parse heat number and start time
-                    var heatMatch = Regex.Match(line, @"HEAT\s+(\d+)");
-                    int heatNumber = heatMatch.Success ? int.Parse(heatMatch.Groups[1].Value) : 0;
-                    var timeMatch = Regex.Match(line, @"([1-9]|10|11|12):\d{2}\s*(AM|PM)");
-                    string startTime = timeMatch.Success ? timeMatch.Value.Trim() : "";
-
-                    currentHeat = new HeatInfo
-                    {
-                        HeatNumber = heatNumber,
-                        StartTime = startTime,
-                        LaneInfos = new List<LaneInfo>().AsQueryable()
-                    };
+                    _context.TransitionTo(new HeatState());
                 }
                 // Lane/Swimmer line (individual)
                 else if (Regex.Match(line, RegexExpressions.singleSwimmerPatternMain).Success)
                 {
-                    var regex = new Regex(RegexExpressions.singleSwimmerPatternMain);
-                    var match = regex.Match(line);
-                    if (match.Success)
-                    {
-                        string name = match.Groups["name"].Value.Trim();
-                        if (name.Contains(","))
-                        {
-                            name = SwapLastCommaFirstToFirstLast(name);
-                        }
-
-                        var laneInfo = new LaneInfo
-                        {
-                            LaneNumber = int.TryParse(match.Groups["laneNumber"].Value.Trim(), out int ln) ? ln : 0,
-                            TeamName = match.Groups["teamName"].Value.Trim(),
-                            SeedTime = match.Groups["seedTime"].Value.Trim(),
-                            SwimmerName = name,
-                            SwimmerAge = int.TryParse(match.Groups["age"].Value.Trim(), out int age) ? age : 0
-                        };
-                        if (currentHeat == null && currentEvent != null)
-                        {
-                            // Only create and add sign-in heat if it doesn't exist
-                            currentHeat = currentEvent.Heats.FirstOrDefault(h => h.HeatNumber == 100);
-                            if (currentHeat == null)
-                            {
-                                currentHeat = new HeatInfo
-                                {
-                                    HeatNumber = 100,
-                                    StartTime = string.Empty,
-                                    LaneInfos = new List<LaneInfo>().AsQueryable()
-                                };
-                                currentEvent.Heats.Add(currentHeat);
-                            }
-                        }
-                        if (currentHeat != null)
-                        {
-                            var lanes = currentHeat.LaneInfos.ToList();
-                            lanes.Add(laneInfo);
-                            currentHeat.LaneInfos = lanes.AsQueryable();
-                        }
-                    }
+                    _context.TransitionTo(new LanePattern1State());
                 }
                 // Lane/Swimmer line (secondary pattern)
                 else if (Regex.Match(line, RegexExpressions.singleSwimmerPatternSecondary).Success)
                 {
-                    var regex = new Regex(RegexExpressions.singleSwimmerPatternSecondary);
-                    var match = regex.Match(line);
-                    if (match.Success)
-                    {
-                        string name = match.Groups["name"].Value.Trim();
-                        if (name.Contains(","))
-                        {
-                            name = SwapLastCommaFirstToFirstLast(name);
-                        }
-
-                        var laneInfo = new LaneInfo
-                        {
-                            LaneNumber = int.TryParse(match.Groups["laneNumber"].Value.Trim(), out int ln) ? ln : 0,
-                            TeamName = match.Groups["teamName"].Value.Trim(),
-                            SeedTime = match.Groups["seedTime"].Value.Trim(),
-                            SwimmerName = name,
-                            SwimmerAge = int.TryParse(match.Groups["age"].Value.Trim(), out int age) ? age : 0
-                        };
-                        if (currentHeat == null && currentEvent != null)
-                        {
-                            // Only create and add sign-in heat if it doesn't exist
-                            currentHeat = currentEvent.Heats.FirstOrDefault(h => h.HeatNumber == 100);
-                            if (currentHeat == null)
-                            {
-                                currentHeat = new HeatInfo
-                                {
-                                    HeatNumber = 100,
-                                    StartTime = string.Empty,
-                                    LaneInfos = new List<LaneInfo>().AsQueryable()
-                                };
-                                currentEvent.Heats.Add(currentHeat);
-                            }
-                        }
-                        if (currentHeat != null)
-                        {
-                            var lanes = currentHeat.LaneInfos.ToList();
-                            lanes.Add(laneInfo);
-                            currentHeat.LaneInfos = lanes.AsQueryable();
-                        }
-                    }
+                    _context.TransitionTo(new LanePattern2State());
                 }
                 // Relay team line
                 else if (Regex.Match(line, RegexExpressions.relayTeamPattern).Success)
@@ -178,12 +55,23 @@ namespace HeatSheetHelper.Core.Helpers
                     currentRelayTeamName = match.Groups["teamName"].Value.Trim();
                     currentRelayTeamLetter = match.Groups["relayTeamLetter"].Value.Trim();
                     currentRelayLane = int.TryParse(match.Groups["laneNumber"].Value.Trim(), out int ln) ? ln : 0;
+                    _context.TransitionTo(new SkipLineState());
                 }
                 // Relay swimmer line
                 else if (Regex.Match(line, RegexExpressions.relaySwimmerPattern).Success)
                 {
                     ParseRelaySwimmers(line, currentHeat, currentRelayLane, currentRelayTeamName, currentRelayTeamLetter, currentRelaySeedTime, RegexExpressions.relaySwimmerPattern);
+                    _context.TransitionTo(new SkipLineState());
                 }
+                else { 
+                    // If no specific pattern matches, we can skip the line or handle it as needed
+                    if (_context.GetCurrentState() is not SkipLineState)
+                    {
+                        // If not in SkipLineState, change to SkipLineState
+                        _context.TransitionTo(new SkipLineState());
+                    }
+                }
+                _context.GetCurrentState().HandleLine(line, ref currentEvent, ref currentHeat, ref events);
             }
             // Add any remaining heat to the last event
             if (currentHeat != null && currentHeat.HeatNumber != 100 && currentEvent != null)
