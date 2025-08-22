@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35828.75
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeatSheetHelperBlazor", "HeatSheetHelperBlazor.csproj", "{E34D6C40-33D5-4A28-8080-36BCEF9F5E14}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeatSheetHelperBlazor", "HeatSheetHelperBlazor\HeatSheetHelperBlazor.csproj", "{E34D6C40-33D5-4A28-8080-36BCEF9F5E14}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeatSheetHelper.Core", "..\HeatSheetHelper.Core\HeatSheetHelper.Core.csproj", "{E556DB5F-C20A-4B8D-A680-D6E1FB184CC5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeatSheetHelper.Core", "HeatSheetHelper.Core\HeatSheetHelper.Core.csproj", "{E556DB5F-C20A-4B8D-A680-D6E1FB184CC5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeatSheetHelper.UnitTests", "..\HeatSheetHelper.UnitTests\HeatSheetHelper.UnitTests.csproj", "{1BCC1D31-C0E0-9729-ECBF-36194334F570}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeatSheetHelper.UnitTests", "HeatSheetHelper.UnitTests\HeatSheetHelper.UnitTests.csproj", "{1BCC1D31-C0E0-9729-ECBF-36194334F570}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
