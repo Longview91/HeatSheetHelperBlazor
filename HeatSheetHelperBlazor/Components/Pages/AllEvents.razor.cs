@@ -1,5 +1,4 @@
-﻿using HeatSheetHelper.Core.Shared;
-using HeatSheetHelperBlazor.Services;
+﻿using HeatSheetHelperBlazor.Services;
 using Microsoft.AspNetCore.Components;
 using HeatSheetHelperBlazor.Helpers;
 using Microsoft.JSInterop;

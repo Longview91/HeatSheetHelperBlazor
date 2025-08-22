@@ -17,7 +17,7 @@
         text-align: left;
         white-space: break-spaces;
         word-break: break-word;
-        font-size: 0.8em;
+        font-size: var(--table-font-size, 16px); /*0.8em;*/
     }
 
     .heat-grid th {
@@ -35,22 +35,22 @@
         .heat-grid th:nth-child(3),
         .heat-grid td:nth-child(3) /* Age */ {
             width: 4vw;
-            min-width: 35px;
+            min-width: 23px;
             max-width: 45px;
             text-align: center;
         }
 
         .heat-grid th:nth-child(2),
         .heat-grid td:nth-child(2) /* Swimmer/Team */ {
-        width: 30vw;
-        min-width: 200px;
-        max-width: 350px;
+            width: 30vw;
+            min-width: 200px;
+            max-width: 350px;
         }
 
         .heat-grid th:nth-child(4),
         .heat-grid td:nth-child(4) /* Seed Time */ {
-            justify-content: right;
             width: 10vw;
             min-width: 60px;
             max-width: 100px;
+            text-align: center;
         }
