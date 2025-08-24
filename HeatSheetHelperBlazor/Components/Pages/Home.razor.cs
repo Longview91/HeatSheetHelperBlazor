@@ -58,6 +58,11 @@ namespace HeatSheetHelperBlazor.Components.Pages
 
         private async Task OnPDFPickClicked()
         {
+            swimmerHeats.Clear();
+            SwimmerListService.SwimmerNameList.Clear();
+            SwimmerListService.SelectedSwimmers.Clear();
+            SwimmerListService.SwimmerFilter = string.Empty;
+
             try
             {
                 var fileResult = await FilePicker.PickAsync(new PickOptions
@@ -101,6 +106,13 @@ namespace HeatSheetHelperBlazor.Components.Pages
             {
                 ErrorModal.Show("Error", "An error was encountered when loading the heat sheet: " + ex.Message);
             }
+
+            if (showFavorites == true)
+            {
+                await ToggleFavorites();
+                ToggleFavorites();
+            }
+
         }
 
         private async Task PopulateSwimmerNameList()
