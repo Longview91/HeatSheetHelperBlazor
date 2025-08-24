@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.AspNetCore.Components;
+﻿using HeatSheetHelper.Core.Shared;
 using HeatSheetHelperBlazor.Services;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using HeatSheetHelper.Core.Shared;
 
 namespace HeatSheetHelperBlazor.Components.Pages
 {
@@ -25,7 +22,7 @@ namespace HeatSheetHelperBlazor.Components.Pages
         private int? heatsBetween;
         private string? eventDetails;
 
-        async Task OnBackClicked() 
+        async Task OnBackClicked()
         {
             {
                 await JS.InvokeVoidAsync("history.back");

@@ -1,10 +1,8 @@
 ﻿using HeatSheetHelper.Core.Constants;
 using HeatSheetHelper.Core.Interfaces;
 using HeatSheetHelper.Core.Shared;
-using HeatSheetHelper.Core.Helpers;
 using HeatSheetHelper.Core.States;
 using System.Text.RegularExpressions;
-using System.Security.Cryptography;
 
 namespace HeatSheetHelper.Core.Helpers
 {
@@ -30,7 +28,7 @@ namespace HeatSheetHelper.Core.Helpers
                 // This will return as SkipLineState if the line is not relevant and we can use that to determine if we should
                 // check for relay patterns or not
                 _context.TransitionTo(new StateFactory().CreateState(line));
-                
+
                 // Relay team line
                 if (_context.GetCurrentState() is SkipLineState && Regex.Match(line, RegexExpressions.relayTeamPattern).Success)
                 {

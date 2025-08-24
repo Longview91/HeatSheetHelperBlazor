@@ -1,14 +1,13 @@
-﻿using UglyToad.PdfPig;
-using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
-using System.Text.RegularExpressions;
-using Microsoft.AspNetCore.Components;
-using HeatSheetHelperBlazor.Services;
-using HeatSheetHelperBlazor.Helpers;
-using Microsoft.JSInterop;
-using HeatSheetHelper.Core.Helpers;
+﻿using HeatSheetHelper.Core.Interfaces;
 using HeatSheetHelper.Core.Models;
 using HeatSheetHelper.Core.Shared;
-using HeatSheetHelper.Core.Interfaces;
+using HeatSheetHelperBlazor.Helpers;
+using HeatSheetHelperBlazor.Services;
+using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using System.Text.RegularExpressions;
+using UglyToad.PdfPig;
+using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 
 namespace HeatSheetHelperBlazor.Components.Pages
 {
@@ -61,11 +60,11 @@ namespace HeatSheetHelperBlazor.Components.Pages
         {
             try
             {
-                    var fileResult = await FilePicker.PickAsync(new PickOptions
-                    {
-                        PickerTitle = "Pick the heat sheet please",
-                        FileTypes = FilePickerFileType.Pdf
-                    });
+                var fileResult = await FilePicker.PickAsync(new PickOptions
+                {
+                    PickerTitle = "Pick the heat sheet please",
+                    FileTypes = FilePickerFileType.Pdf
+                });
 
                 if (fileResult == null)
                     return;
