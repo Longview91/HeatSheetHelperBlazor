@@ -1,6 +1,108 @@
 ﻿@page "/help"
+
 <h3>Help</h3>
 
-@code {
+<div>
+    <p>
+        Welcome to the <strong>Heat Sheet Helper</strong> home page! This guide will walk you through the main features and how to use them.
+    </p>
 
+    <hr />
+
+    <div>Home Page</div>
+    <h4>Page Overview</h4>
+    <ul>
+        <li>Load a heat sheet PDF</li>
+        <li>Filter and select swimmers</li>
+        <li>View event, heat, lane, and swimmer details</li>
+        <li>Manage your favorite swimmers</li>
+    </ul>
+
+    <hr />
+
+    <h4>Main Features</h4>
+
+    <ol>
+        <li>
+            <strong>Loading a Heat Sheet</strong>
+            <ul>
+                <li>
+                    <strong>Button:</strong>
+                    <ul>
+                        <li>If no heat sheet is loaded, click <em>Choose a Heat Sheet</em> to select your PDF.</li>
+                        <li>If a heat sheet is already loaded, the button will read <em>Choose a different Heat Sheet</em> to allow you to load another.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <strong>Filtering and Selecting Swimmers</strong>
+            <ul>
+                <li>
+                    <strong>Filter Panel:</strong>
+                    <ul>
+                        <li>Click the chevron button (▸/▾) to expand or collapse the filter panel.</li>
+                        <li>Type in the filter box to search for swimmers by name.</li>
+                        <li>Use the checkboxes to select one or more swimmers for focused viewing.</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Favorites:</strong>
+                    <ul>
+                        <li>Click the star icon to manage your favorite swimmers.</li>
+                        <li>A popup will appear with options to <em>Add to Favorites</em>, <em>Overwrite Favorites</em>, or <em>Cancel</em>.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <strong>Viewing Heats and Events</strong>
+            <ul>
+                <li>
+                    <strong>Heats Table:</strong>
+                    <ul>
+                        <li>The main table displays all heats for the selected swimmers.</li>
+                        <li>
+                            <strong>Columns include:</strong>
+                            <ul>
+                                <li><strong>E:</strong> Event Number</li>
+                                <li><strong>H:</strong> Heat Number (shows "Sign-in Event" for special heats)</li>
+                                <li><strong>L:</strong> Lane Number</li>
+                                <li><strong>Event/Swimmer Name:</strong> Event name and swimmer's name</li>
+                                <li><strong>Start Time/Seed Time:</strong> Scheduled start and seed times</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Row Click:</strong> Click any row to view more details about that specific heat (feature may open a detailed view or popup).
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <strong>Responsive Layout</strong>
+            <ul>
+                <li>The page is designed to fit most screens without scrolling.</li>
+                <li>The filter panel and table adjust based on your selections.</li>
+            </ul>
+        </li>
+    </ol>
+
+    <hr />
+
+    <h4>Tips</h4>
+    <ul>
+        <li>If you do not see any events, make sure you have loaded a valid heat sheet.</li>
+        <li>Use the filter and favorites features to quickly find and manage swimmers of interest.</li>
+    </ul>
+
+    <hr />
+
+    <h4>Screenshots</h4>
+    <p>
+        <em>Screenshots will be added here to illustrate each feature.</em>
+    </p>
+</div>
+
+@code {
 }
