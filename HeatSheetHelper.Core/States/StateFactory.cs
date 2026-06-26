@@ -1,14 +1,9 @@
 ﻿using HeatSheetHelper.Core.Constants;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace HeatSheetHelper.Core.States
 {
-    internal class StateFactory
+    public class StateFactory
     {
         public State CreateState(string line)
         {

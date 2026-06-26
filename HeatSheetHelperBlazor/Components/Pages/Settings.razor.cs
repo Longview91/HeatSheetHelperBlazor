@@ -1,10 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HeatSheetHelperBlazor.Components.Pages
 {
@@ -13,7 +8,7 @@ namespace HeatSheetHelperBlazor.Components.Pages
         [Inject] private NavigationManager Navigation { get; set; }
         [Inject] private IJSRuntime JS { get; set; }
         private string headerColor = "#8b0000"; // Default to darkred
-        private int fontSize = 16; // Default font size
+        private int fontSize = 15; // Default font size
         private string fontSizePx => $"{fontSize}px";
 
         protected override async Task OnInitializedAsync()
@@ -48,6 +43,7 @@ namespace HeatSheetHelperBlazor.Components.Pages
         {
             await JS.InvokeVoidAsync("blazorLocalStorage.set", "tableFontSize", fontSize.ToString());
             await JS.InvokeVoidAsync("setTableFontSize", $"{fontSize}px");
+            Navigation.NavigateTo("/");
         }
     }
 }

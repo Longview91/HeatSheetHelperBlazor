@@ -124,7 +124,7 @@
     }
     
     <div style="display: flex; justify-content: center; align-items: center; margin-top: 24px; margin-bottom: 24px;">
-        <button class="button-style" @onclick="OnPDFPickClicked" style="max-width: 170px">
+        <button class="button-style" @onclick="OnPDFPickClicked" >
             @(MeetDataService.SwimMeet.SwimEvents.Count == 0
             ? "Choose a Heat Sheet"
             : "Choose a different Heat Sheet")

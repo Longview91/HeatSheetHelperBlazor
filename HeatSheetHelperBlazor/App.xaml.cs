@@ -1,6 +1,4 @@
-﻿using HeatSheetHelper.Core.Helpers;
-
-namespace HeatSheetHelperBlazor
+﻿namespace HeatSheetHelperBlazor
 {
     public partial class App : Application
     {

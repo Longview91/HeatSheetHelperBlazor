@@ -16,7 +16,8 @@ namespace HeatSheetHelper.UnitTests
         [Test]
         public void ParseHeatSheetToEvents_ReturnsExpectedSwimMeet()
         {
-            ISwimmerFunctions SwimmerFunctions = new SwimmerFunctions();
+
+            SwimmerFunctions SwimmerFunctions = new();
             // Arrange
             var heatSheet = new List<string>
             {
@@ -29,18 +30,27 @@ namespace HeatSheetHelper.UnitTests
             // Act
             var result = SwimmerFunctions.ParseHeatSheetToEvents(heatSheet);
 
-            // Assert
-            Assert.That(result is not null);
-            Assert.That(result.SwimEvents is not null);
-            Assert.That(result.SwimEvents.Count.Equals(1));
+            Assert.Multiple(() =>
+            {
+                // Assert
+                Assert.That(result is not null);
+                Assert.That(result.SwimEvents is not null);
+                Assert.That(result.SwimEvents, Has.Count.EqualTo(1));
+            });
             var swimEvent = result.SwimEvents[0];
-            Assert.That(swimEvent.EventNumber.Equals(1));
-            Assert.That("BOYS 8 & UNDER 25 YARD FREESTYLE".Equals(swimEvent.EventDetails));
-            Assert.That(1.Equals(swimEvent.Heats.Count));
+            Assert.Multiple(() =>
+            {
+                Assert.That(swimEvent.EventNumber, Is.EqualTo(1));
+                Assert.That(swimEvent.EventDetails, Is.EqualTo("BOYS 8 & UNDER 25 YARD FREESTYLE"));
+                Assert.That(swimEvent.Heats, Has.Count.EqualTo(1));
+            });
             var heat = swimEvent.Heats[0];
-            Assert.That(1.Equals(heat.HeatNumber));
-            Assert.That("9:00 AM".Equals(heat.StartTime));
-            Assert.That(2.Equals(heat.LaneInfos.Count()));
+            Assert.Multiple(() =>
+            {
+                Assert.That(heat.HeatNumber, Is.EqualTo(1));
+                Assert.That(heat.StartTime, Is.EqualTo("9:00 AM"));
+                Assert.That(heat.LaneInfos.Count(), Is.EqualTo(2));
+            });
         }
         [Test]
         public void CleanseTheData_Moq_ReturnsMockedValue()
@@ -60,11 +70,13 @@ namespace HeatSheetHelper.UnitTests
             var expectedDate = new DateTime(2025, 8, 20, 9, 0, 0);
             mock.Setup(x => x.TryParseTime("9:00 AM", out expectedDate)).Returns(true);
 
-            DateTime actualDate;
-            var success = mock.Object.TryParseTime("9:00 AM", out actualDate);
+            var success = mock.Object.TryParseTime("9:00 AM", out DateTime actualDate);
 
-            Assert.That(success, Is.True);
-            Assert.That(actualDate, Is.EqualTo(expectedDate));
+            Assert.Multiple(() =>
+            {
+                Assert.That(success, Is.True);
+                Assert.That(actualDate, Is.EqualTo(expectedDate));
+            });
         }
 
         [Test]
@@ -82,7 +94,7 @@ namespace HeatSheetHelper.UnitTests
         [Test]
         public void SwapLastCommaFirstToFirstLast_ReturnsCorrectFormat()
         {
-            ISwimmerFunctions swimmerFunctions = new SwimmerFunctions();
+            SwimmerFunctions swimmerFunctions = new();
             var result = swimmerFunctions.SwapLastCommaFirstToFirstLast("Smith, John");
             Assert.That(result, Is.EqualTo("John Smith"));
         }
@@ -90,22 +102,22 @@ namespace HeatSheetHelper.UnitTests
         [Test]
         public void FillMissingHeatStartTimes_FillsStartTimeFromPreviousHeat()
         {
-            ISwimmerFunctions swimmerFunctions = new SwimmerFunctions();
+            SwimmerFunctions swimmerFunctions = new();
             var swimMeet = new SwimMeet
             {
-                SwimEvents = new List<SwimEvent>
-                {
+                SwimEvents =
+                [
                     new SwimEvent
                     {
                         EventNumber = 1,
                         EventDetails = "Test Event",
-                        Heats = new List<HeatInfo>
-                        {
+                        Heats =
+                        [
                             new HeatInfo { HeatNumber = 1, StartTime = "9:00 AM", LaneInfos = new List<LaneInfo>().AsQueryable() },
                             new HeatInfo { HeatNumber = 2, StartTime = "", LaneInfos = new List<LaneInfo>().AsQueryable() }
-                        }
+                        ]
                     }
-                }
+                ]
             };
 
             swimmerFunctions.FillMissingHeatStartTimes(swimMeet);
@@ -116,7 +128,7 @@ namespace HeatSheetHelper.UnitTests
         [Test]
         public void ParseRelaySwimmers_AddsSwimmersToHeat()
         {
-            ISwimmerFunctions swimmerFunctions = new SwimmerFunctions();
+            SwimmerFunctions swimmerFunctions = new();
             var heat = new HeatInfo
             {
                 HeatNumber = 1,
@@ -133,21 +145,24 @@ namespace HeatSheetHelper.UnitTests
             swimmerFunctions.ParseRelaySwimmers(line, heat, lane, teamName, teamLetter, seedTime, pattern);
 
             var lanes = heat.LaneInfos.ToList();
-            Assert.That(lanes.Count, Is.EqualTo(2));
-            Assert.That(lanes[0].SwimmerName, Is.EqualTo("John Smith"));
-            Assert.That(lanes[1].SwimmerName, Is.EqualTo("Jane Doe"));
-            Assert.That(lanes[0].LaneNumber, Is.EqualTo(2));
-            Assert.That(lanes[0].TeamName, Is.EqualTo("Sharks"));
-            Assert.That(lanes[0].RelayTeamLetter, Is.EqualTo("A"));
-            Assert.That(lanes[0].SeedTime, Is.EqualTo("15.23"));
-            Assert.That(lanes[0].SwimmerAge, Is.EqualTo(12));
-            Assert.That(lanes[1].SwimmerAge, Is.EqualTo(13));
+            Assert.Multiple(() =>
+            {
+                Assert.That(lanes, Has.Count.EqualTo(2));
+                Assert.That(lanes[0].SwimmerName, Is.EqualTo("John Smith"));
+                Assert.That(lanes[1].SwimmerName, Is.EqualTo("Jane Doe"));
+                Assert.That(lanes[0].LaneNumber, Is.EqualTo(2));
+                Assert.That(lanes[0].TeamName, Is.EqualTo("Sharks"));
+                Assert.That(lanes[0].RelayTeamLetter, Is.EqualTo("A"));
+                Assert.That(lanes[0].SeedTime, Is.EqualTo("15.23"));
+                Assert.That(lanes[0].SwimmerAge, Is.EqualTo(12));
+                Assert.That(lanes[1].SwimmerAge, Is.EqualTo(13));
+            });
         }
 
         [Test]
         public void CleanseTheData_ReplacesButterblyWithButterfly()
         {
-            ISwimmerFunctions swimmerFunctions = new SwimmerFunctions();
+            SwimmerFunctions swimmerFunctions = new();
             var result = swimmerFunctions.CleanseTheData("butterbly");
             Assert.That(result, Is.EqualTo("BUTTERFLY"));
         }
@@ -155,25 +170,30 @@ namespace HeatSheetHelper.UnitTests
         [Test]
         public void TryParseTime_ValidTime_ReturnsTrue()
         {
-            ISwimmerFunctions swimmerFunctions = new SwimmerFunctions();
-            DateTime dt;
-            var success = swimmerFunctions.TryParseTime("9:00 AM", out dt);
-            Assert.That(success, Is.True);
-            Assert.That(dt.Hour, Is.EqualTo(9));
-            Assert.That(dt.Minute, Is.EqualTo(0));
+            SwimmerFunctions swimmerFunctions = new();
+            var success = swimmerFunctions.TryParseTime("9:00 AM", out DateTime dt);
+            Assert.Multiple(() =>
+            {
+                Assert.That(success, Is.True);
+                Assert.That(dt.Hour, Is.EqualTo(9));
+                Assert.That(dt.Minute, Is.EqualTo(0));
+            });
         }
 
         [Test]
         public void ParseRelaySwimmerEventInfo_ParsesCorrectly()
         {
-            ISwimmerFunctions swimmerFunctions = new SwimmerFunctions();
+            SwimmerFunctions swimmerFunctions = new();
             string line = "Sharks 15.23 1";
             string pattern = @"(?<teamName>Sharks)\s(?<seedTime>15.23)\s(?<laneNumber>1)";
             var result = swimmerFunctions.ParseRelaySwimmerEventInfo(line, pattern);
-            Assert.That(result.Item1, Is.EqualTo("15.23"));
-            Assert.That(result.Item2, Is.EqualTo("Sharks"));
-            Assert.That(result.Item3, Is.EqualTo("1"));
-            Assert.That(result.Item4, Is.False);
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.Item1, Is.EqualTo("15.23"));
+                Assert.That(result.Item2, Is.EqualTo("Sharks"));
+                Assert.That(result.Item3, Is.EqualTo("1"));
+                Assert.That(result.Item4, Is.False);
+            });
         }
 
         [Test]
